@@ -1,32 +1,67 @@
 #!/bin/bash
-# Shim: delegates to compiled find-browse binary, falls back to basic discovery.
-# The compiled binary handles git root detection for workspace-local installs.
 DIR="$(cd "$(dirname "$0")/.." && pwd)/dist"
-if test -x "$DIR/find-browse"; then
-  exec "$DIR/find-browse" "$@"
-fi
-if test -x "$DIR/browse"; then
-  echo "$DIR/browse"
-  exit 0
-fi
-# Fallback: basic discovery with priority chain
-ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
-if [ -n "$ROOT" ] && test -x "$ROOT/.gstack-lite/browse/dist/browse"; then
-  echo "$ROOT/.gstack-lite/browse/dist/browse"
-  exit 0
+PROVIDER="${GSTACK_BROWSER_PROVIDER:-auto}"
+
+find_global() {
+  if command -v gstack-browser >/dev/null 2>&1; then
+    command -v gstack-browser
+    return 0
+  fi
+  if command -v gstack-browse >/dev/null 2>&1; then
+    command -v gstack-browse
+    return 0
+  fi
+  return 1
+}
+
+find_local() {
+  ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
+  if [ -n "$ROOT" ] && test -x "$ROOT/.gstack-lite/browse/dist/browse"; then
+    echo "$ROOT/.gstack-lite/browse/dist/browse"
+    return 0
+  fi
+  if test -x "$STATE_DIR/browse/dist/browse"; then
+    echo "$STATE_DIR/browse/dist/browse"
+    return 0
+  fi
+  if test -x "$DIR/browse"; then
+    echo "$DIR/browse"
+    return 0
+  fi
+  return 1
+}
+
+if [ -n "${GSTACK_BROWSER_BIN:-}" ]; then
+  if test -x "$GSTACK_BROWSER_BIN"; then
+    echo "$GSTACK_BROWSER_BIN"
+    exit 0
+  fi
+  echo "ERROR: GSTACK_BROWSER_BIN is not executable: $GSTACK_BROWSER_BIN" >&2
+  exit 1
 fi
-if test -x "$STATE_DIR/browse/dist/browse"; then
-  echo "$STATE_DIR/browse/dist/browse"
-  exit 0
-fi
-if command -v gstack-browser >/dev/null 2>&1; then
-  command -v gstack-browser
-  exit 0
-fi
-if command -v gstack-browse >/dev/null 2>&1; then
-  command -v gstack-browse
-  exit 0
-fi
-echo "ERROR: browse binary not found at $STATE_DIR/browse/dist/browse and gstack-browser is not on PATH" >&2
-exit 1
+
+case "$PROVIDER" in
+  auto|"")
+    find_global || find_local || {
+      echo "ERROR: gstack-browser is not on PATH and local browser CLI was not found at $STATE_DIR/browse/dist/browse" >&2
+      exit 1
+    }
+    ;;
+  global|published)
+    find_global || {
+      echo "ERROR: GSTACK_BROWSER_PROVIDER=$PROVIDER but gstack-browser is not on PATH" >&2
+      exit 1
+    }
+    ;;
+  local)
+    find_local || {
+      echo "ERROR: GSTACK_BROWSER_PROVIDER=local but local browser CLI was not found at $STATE_DIR/browse/dist/browse" >&2
+      exit 1
+    }
+    ;;
+  *)
+    echo "ERROR: unknown GSTACK_BROWSER_PROVIDER: $PROVIDER (expected auto, global, published, or local)" >&2
+    exit 1
+    ;;
+esac

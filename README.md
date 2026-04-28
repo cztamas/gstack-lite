@@ -67,7 +67,20 @@ npm install
 npx playwright install chromium
 ```
 
-It can also be installed globally as `gstack-browser`. If a runtime is missing, the relevant skills should fall back to host-native browser tools, screenshots, wireframes, or written review.
+It can also be installed globally as `gstack-browser`:
+
+```bash
+npm i -g gstack-browser
+```
+
+Browser provider selection:
+
+- Default: use `gstack-browser` on `PATH` when present, then fall back to the local/state wrapper.
+- Published/global: `GSTACK_BROWSER_PROVIDER=global`
+- Checkout-local: `GSTACK_BROWSER_PROVIDER=local`
+- Explicit binary: `GSTACK_BROWSER_BIN=/absolute/path/to/browser`
+
+For local browser package development, run `npm link` from `browse/`; the global `gstack-browser` command will point at this checkout until you unlink/reinstall it. If a runtime is missing, the relevant skills should fall back to host-native browser tools, screenshots, wireframes, or written review.
 
 ## Development
 

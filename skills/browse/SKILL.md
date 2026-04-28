@@ -59,6 +59,14 @@ npm install
 npx playwright install chromium
 ```
 
+Provider selection:
+
+- Default: use `gstack-browser` on `PATH` when present, then fall back to the local/state wrapper.
+- Published/global: set `GSTACK_BROWSER_PROVIDER=global`.
+- Checkout-local: set `GSTACK_BROWSER_PROVIDER=local`.
+- Hard override: set `GSTACK_BROWSER_BIN=/absolute/path/to/browser`.
+- Local package development: run `npm link` from the `browse/` package; `gstack-browser` on `PATH` will point at the linked checkout.
+
 ## Core QA Patterns
 
 ### Verify a page loads
