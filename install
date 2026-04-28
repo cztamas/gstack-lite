@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd -P)"
+STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
+
+HOSTS=()
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  ./install --host claude
+  ./install --host codex
+  ./install --host cursor
+  ./install --all
+
+Installs namespaced gstack-lite skills as symlinks:
+  gstack-lite-office-hours, gstack-lite-review, ...
+
+The installer only writes to the selected host skill directory and
+$HOME/.gstack-lite for shared runtime assets.
+USAGE
+}
+
+add_host() {
+  case "$1" in
+    claude|codex|cursor) HOSTS+=("$1") ;;
+    *) echo "Unknown host: $1" >&2; usage >&2; exit 1 ;;
+  esac
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --host)
+      [ "$#" -ge 2 ] || { echo "Missing value for --host" >&2; exit 1; }
+      add_host "$2"
+      shift 2
+      ;;
+    --host=*)
+      add_host "${1#--host=}"
+      shift
+      ;;
+    --all)
+      HOSTS=(claude codex cursor)
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ "${#HOSTS[@]}" -eq 0 ]; then
+  HOSTS=(claude)
+fi
+
+host_skill_dir() {
+  case "$1" in
+    claude) printf '%s\n' "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}" ;;
+    codex) printf '%s\n' "${CODEX_SKILLS_DIR:-${CODEX_HOME:-$HOME/.codex}/skills}" ;;
+    cursor) printf '%s\n' "${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}" ;;
+  esac
+}
+
+link_dir() {
+  local src="$1"
+  local dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  if [ -L "$dst" ] || [ ! -e "$dst" ]; then
+    ln -sfn "$src" "$dst"
+  else
+    echo "  warning: $dst already exists and is not a symlink; leaving it untouched" >&2
+  fi
+}
+
+install_runtime() {
+  mkdir -p "$STATE_DIR"
+
+  for asset in bin browse design design-html review qa ETHOS.md; do
+    if [ -e "$ROOT/$asset" ] || [ -L "$ROOT/$asset" ]; then
+      link_dir "$ROOT/$asset" "$STATE_DIR/$asset"
+    fi
+  done
+}
+
+install_host() {
+  local host="$1"
+  local skills_dir
+  skills_dir="$(host_skill_dir "$host")"
+  mkdir -p "$skills_dir"
+
+  local linked=()
+  for skill_dir in "$ROOT"/skills/*; do
+    [ -f "$skill_dir/SKILL.md" ] || continue
+    local skill
+    skill="$(basename "$skill_dir")"
+    local name="gstack-lite-$skill"
+    link_dir "$skill_dir" "$skills_dir/$name"
+    linked+=("$name")
+  done
+
+  echo "gstack-lite ready ($host)"
+  echo "  skills: $skills_dir"
+  echo "  runtime: $STATE_DIR"
+  echo "  commands: ${linked[*]}"
+}
+
+install_runtime
+for host in "${HOSTS[@]}"; do
+  install_host "$host"
+done
+
+if [ ! -x "$STATE_DIR/browse/dist/browse" ]; then
+  echo "note: browse binary not present at $STATE_DIR/browse/dist/browse; browser skills will degrade to host-native browser tools or written QA."
+fi
+
+if [ ! -x "$STATE_DIR/design/dist/design" ]; then
+  echo "note: design binary not present at $STATE_DIR/design/dist/design; design skills will use text, wireframes, and available screenshots."
+fi

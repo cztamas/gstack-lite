@@ -1,0 +1,11 @@
+{
+  "name": "gstack-lite",
+  "version": "0.1.0",
+  "description": "Lite gstack skill pack for Claude Code, OpenAI Codex, and Cursor.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "import:skills": "node tools/import-from-gstack.mjs",
+    "test": "node tools/validate-lite.mjs"
+  }
+}

@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
+HOSTS=()
+REMOVE_STATE=0
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  ./uninstall --host claude
+  ./uninstall --host codex
+  ./uninstall --host cursor
+  ./uninstall --all
+  ./uninstall --all --state
+
+Removes only gstack-lite-* skill symlinks from selected host skill directories.
+Use --state to also remove $HOME/.gstack-lite.
+USAGE
+}
+
+add_host() {
+  case "$1" in
+    claude|codex|cursor) HOSTS+=("$1") ;;
+    *) echo "Unknown host: $1" >&2; usage >&2; exit 1 ;;
+  esac
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --host)
+      [ "$#" -ge 2 ] || { echo "Missing value for --host" >&2; exit 1; }
+      add_host "$2"
+      shift 2
+      ;;
+    --host=*)
+      add_host "${1#--host=}"
+      shift
+      ;;
+    --all)
+      HOSTS=(claude codex cursor)
+      shift
+      ;;
+    --state)
+      REMOVE_STATE=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ "${#HOSTS[@]}" -eq 0 ]; then
+  HOSTS=(claude)
+fi
+
+host_skill_dir() {
+  case "$1" in
+    claude) printf '%s\n' "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}" ;;
+    codex) printf '%s\n' "${CODEX_SKILLS_DIR:-${CODEX_HOME:-$HOME/.codex}/skills}" ;;
+    cursor) printf '%s\n' "${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}" ;;
+  esac
+}
+
+uninstall_host() {
+  local host="$1"
+  local skills_dir
+  skills_dir="$(host_skill_dir "$host")"
+  [ -d "$skills_dir" ] || { echo "No skill directory for $host: $skills_dir"; return 0; }
+
+  local removed=0
+  for target in "$skills_dir"/gstack-lite-*; do
+    [ -e "$target" ] || [ -L "$target" ] || continue
+    if [ -L "$target" ]; then
+      rm -f "$target"
+      removed=$((removed + 1))
+    else
+      echo "  warning: $target is not a symlink; leaving it untouched" >&2
+    fi
+  done
+
+  echo "gstack-lite removed ($host): $removed skill link(s)"
+}
+
+for host in "${HOSTS[@]}"; do
+  uninstall_host "$host"
+done
+
+if [ "$REMOVE_STATE" -eq 1 ]; then
+  case "$STATE_DIR" in
+    "$HOME/.gstack-lite"|"$HOME/.gstack-lite"/*)
+      rm -rf "$STATE_DIR"
+      echo "removed state: $STATE_DIR"
+      ;;
+    *)
+      echo "refusing to remove nonstandard state path: $STATE_DIR" >&2
+      exit 1
+      ;;
+  esac
+fi
