@@ -23,7 +23,6 @@ const skillStarts = new Map([
   ['investigate', '# Systematic Debugging'],
   ['review', '# Pre-Landing PR Review'],
   ['cso', '# /cso - Chief Security Officer Audit (v2)'],
-  ['browse', '# browse: QA Testing & Dogfooding'],
   ['qa', '# /qa: Test -> Fix -> Verify'],
   ['qa-only', '# /qa-only: Report-Only QA Testing'],
   ['freeze', '# /freeze - Restrict Edits to a Directory'],
@@ -389,7 +388,6 @@ async function importAssets() {
     .replaceAll('gstack-diff-scope', 'gl-diff-scope');
   await writeFile(path.join(repoRoot, 'bin', 'gl-diff-scope'), toAscii(diffScope), { mode: 0o755 });
 
-  await copyIfExists(path.join(sourceRoot, 'browse', 'dist'), path.join(repoRoot, 'browse', 'dist'));
   await copyIfExists(path.join(sourceRoot, 'design', 'dist'), path.join(repoRoot, 'design', 'dist'));
   await copyIfExists(path.join(sourceRoot, 'design-html', 'vendor'), path.join(repoRoot, 'design-html', 'vendor'));
   await copyTextIfExists(path.join(sourceRoot, 'review', 'checklist.md'), path.join(repoRoot, 'review', 'checklist.md'), toAscii);
@@ -420,21 +418,6 @@ async function importAssets() {
     path.join(sourceRoot, 'browse', 'bin', 'remote-slug'),
     path.join(repoRoot, 'browse', 'bin', 'remote-slug'),
     (text) => toAscii(text.replaceAll('~/.gstack', '$HOME/.gstack-lite')),
-  );
-  await copyTextIfExists(
-    path.join(sourceRoot, 'browse', 'bin', 'find-browse'),
-    path.join(repoRoot, 'browse', 'bin', 'find-browse'),
-    (text) => toAscii(text
-      .replace(/for MARKER in \.codex \.agents \.claude; do[\s\S]*?done/, `STATE_DIR="\${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
-if [ -n "$ROOT" ] && test -x "$ROOT/.gstack-lite/browse/dist/browse"; then
-  echo "$ROOT/.gstack-lite/browse/dist/browse"
-  exit 0
-fi
-if test -x "$STATE_DIR/browse/dist/browse"; then
-  echo "$STATE_DIR/browse/dist/browse"
-  exit 0
-fi`)
-      .replace('ERROR: browse binary not found. Run: cd <skill-dir> && ./setup', 'ERROR: browse binary not found at $HOME/.gstack-lite/browse/dist/browse')),
   );
   await chmod(path.join(repoRoot, 'browse', 'bin', 'remote-slug'), 0o755);
   await chmod(path.join(repoRoot, 'browse', 'bin', 'find-browse'), 0o755);

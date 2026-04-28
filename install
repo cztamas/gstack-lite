@@ -96,11 +96,12 @@ install_runtime() {
     fi
   done
 
+  mkdir -p "$STATE_DIR/skills"
   for skill_dir in "$ROOT"/skills/*; do
     [ -f "$skill_dir/SKILL.md" ] || continue
     local skill
     skill="$(basename "$skill_dir")"
-    link_dir "$skill_dir" "$STATE_DIR/$skill"
+    link_dir "$skill_dir" "$STATE_DIR/skills/$skill"
   done
 }
 
@@ -133,6 +134,8 @@ done
 
 if [ ! -x "$STATE_DIR/browse/dist/browse" ]; then
   echo "note: browse binary not present at $STATE_DIR/browse/dist/browse; browser skills will degrade to host-native browser tools or written QA."
+elif [ ! -d "$STATE_DIR/browse/node_modules/playwright" ]; then
+  echo "note: browser CLI is present, but Playwright dependencies are not installed. Run: cd $STATE_DIR/browse && npm install && npx playwright install chromium"
 fi
 
 if [ ! -x "$STATE_DIR/design/dist/design" ]; then

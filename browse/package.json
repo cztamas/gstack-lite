@@ -1,0 +1,28 @@
+{
+  "name": "gstack-browser",
+  "version": "0.1.0",
+  "description": "Lightweight local browser automation CLI for agent-driven QA.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "gstack-browser": "./src/cli.js",
+    "gstack-browse": "./src/cli.js"
+  },
+  "scripts": {
+    "check": "node --check src/cli.js && node --check src/server.js && node --check src/config.js",
+    "smoke:help": "node src/cli.js help"
+  },
+  "dependencies": {
+    "playwright": "^1.58.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "browser",
+    "automation",
+    "playwright",
+    "headless",
+    "cli"
+  ]
+}

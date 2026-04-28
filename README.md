@@ -20,7 +20,7 @@ Other hosts:
 ./install --all
 ```
 
-The installer creates namespaced skill symlinks such as `gl-review` and `gl-qa`, then links shared runtime assets and unprefixed skill mirrors into `$HOME/.gstack-lite`.
+The installer creates namespaced skill symlinks such as `gl-review` and `gl-qa`, then links shared runtime assets into `$HOME/.gstack-lite` and skill mirrors into `$HOME/.gstack-lite/skills`.
 
 ## Uninstall
 
@@ -53,13 +53,21 @@ The installer creates namespaced skill symlinks such as `gl-review` and `gl-qa`,
 
 ## Runtime Assets
 
-The browser and design binaries are optional progressive enhancements:
+The browser and design runtimes are optional progressive enhancements:
 
-- Browser: `$HOME/.gstack-lite/browse/dist/browse`
+- Browser CLI: `$HOME/.gstack-lite/browse/dist/browse`
 - Design: `$HOME/.gstack-lite/design/dist/design`
 - Pretext vendor file: `$HOME/.gstack-lite/design-html/vendor/pretext.js`
 
-If a binary is missing, the relevant skills should fall back to host-native browser tools, screenshots, wireframes, or written review.
+The browser CLI is a Node + Playwright package in `browse/`. For a local checkout:
+
+```bash
+cd browse
+npm install
+npx playwright install chromium
+```
+
+It can also be installed globally as `gstack-browser`. If a runtime is missing, the relevant skills should fall back to host-native browser tools, screenshots, wireframes, or written review.
 
 ## Development
 
@@ -73,4 +81,5 @@ Validate the lite package:
 
 ```bash
 npm test
+npm run browser:check
 ```

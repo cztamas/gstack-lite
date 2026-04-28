@@ -4,8 +4,13 @@
   "description": "Lite gstack skill pack for Claude Code, OpenAI Codex, and Cursor.",
   "license": "MIT",
   "type": "module",
+  "workspaces": [
+    "browse"
+  ],
   "scripts": {
     "import:skills": "node tools/import-from-gstack.mjs",
+    "browser:check": "npm run check --workspace browse",
+    "browser:help": "npm run smoke:help --workspace browse",
     "test": "node tools/validate-lite.mjs"
   }
 }

@@ -5,6 +5,10 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)/dist"
 if test -x "$DIR/find-browse"; then
   exec "$DIR/find-browse" "$@"
 fi
+if test -x "$DIR/browse"; then
+  echo "$DIR/browse"
+  exit 0
+fi
 # Fallback: basic discovery with priority chain
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
@@ -16,5 +20,13 @@ if test -x "$STATE_DIR/browse/dist/browse"; then
   echo "$STATE_DIR/browse/dist/browse"
   exit 0
 fi
-echo "ERROR: browse binary not found at $HOME/.gstack-lite/browse/dist/browse" >&2
+if command -v gstack-browser >/dev/null 2>&1; then
+  command -v gstack-browser
+  exit 0
+fi
+if command -v gstack-browse >/dev/null 2>&1; then
+  command -v gstack-browse
+  exit 0
+fi
+echo "ERROR: browse binary not found at $STATE_DIR/browse/dist/browse and gstack-browser is not on PATH" >&2
 exit 1
