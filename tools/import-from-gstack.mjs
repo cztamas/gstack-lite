@@ -381,7 +381,8 @@ async function importAssets() {
   await mkdir(path.join(repoRoot, 'bin'), { recursive: true });
   const slug = (await readFile(path.join(sourceRoot, 'bin', 'gstack-slug'), 'utf8'))
     .replaceAll('$HOME/.gstack', '$HOME/.gstack-lite')
-    .replaceAll('gstack-slug', 'gl-slug');
+    .replaceAll('gstack-slug', 'gl-slug')
+    .replace('CACHE_DIR="$HOME/.gstack-lite/slug-cache"', 'STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"\nCACHE_DIR="$STATE_DIR/slug-cache"');
   await writeFile(path.join(repoRoot, 'bin', 'gl-slug'), toAscii(slug), { mode: 0o755 });
 
   const diffScope = (await readFile(path.join(sourceRoot, 'bin', 'gstack-diff-scope'), 'utf8'))

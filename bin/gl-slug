@@ -7,7 +7,8 @@
 # shell injection when consumed via source or eval.
 set -euo pipefail
 
-CACHE_DIR="$HOME/.gstack-lite/slug-cache"
+STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
+CACHE_DIR="$STATE_DIR/slug-cache"
 PROJECT_DIR="$(pwd)"
 # Encode absolute path as cache key: /Users/j/foo -> _Users_j_foo
 CACHE_KEY=$(printf '%s' "$PROJECT_DIR" | tr '/' '_')

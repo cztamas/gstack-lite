@@ -72,7 +72,15 @@ link_dir() {
   local src="$1"
   local dst="$2"
   mkdir -p "$(dirname "$dst")"
-  if [ -L "$dst" ] || [ ! -e "$dst" ]; then
+  if [ -L "$dst" ]; then
+    local current
+    current="$(readlink "$dst" 2>/dev/null || true)"
+    if [[ "$dst" != "$STATE_DIR/"* && "$current" != "$src" ]]; then
+      echo "  warning: $dst already exists as a symlink to $current; leaving it untouched" >&2
+      return 0
+    fi
+    ln -sfn "$src" "$dst"
+  elif [ ! -e "$dst" ]; then
     ln -sfn "$src" "$dst"
   else
     echo "  warning: $dst already exists and is not a symlink; leaving it untouched" >&2

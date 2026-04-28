@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "$0")" && pwd -P)"
 STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
 HOSTS=()
 REMOVE_STATE=0
@@ -76,9 +77,19 @@ uninstall_host() {
   [ -d "$skills_dir" ] || { echo "No skill directory for $host: $skills_dir"; return 0; }
 
   local removed=0
-  for target in "$skills_dir"/gl-*; do
+  for skill_dir in "$ROOT"/skills/*; do
+    [ -f "$skill_dir/SKILL.md" ] || continue
+    local skill
+    skill="$(basename "$skill_dir")"
+    local target="$skills_dir/gl-$skill"
     [ -e "$target" ] || [ -L "$target" ] || continue
     if [ -L "$target" ]; then
+      local current
+      current="$(readlink "$target" 2>/dev/null || true)"
+      if [ "$current" != "$skill_dir" ]; then
+        echo "  warning: $target points to $current, not $skill_dir; leaving it untouched" >&2
+        continue
+      fi
       rm -f "$target"
       removed=$((removed + 1))
     else
