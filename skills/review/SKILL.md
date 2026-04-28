@@ -1,5 +1,5 @@
 ---
-name: gstack-lite-review
+name: gl-review
 description: |
   Pre-landing PR review. Analyzes diff against the base branch for SQL safety, LLM trust
   boundary violations, conditional side effects, and other structural issues. Use when
@@ -25,7 +25,7 @@ Lite runtime paths:
 
 # Pre-Landing PR Review
 
-You are running the `/review` workflow. Analyze the current branch's diff against the base branch for structural issues that tests don't catch.
+You are running the `/gl-review` workflow. Analyze the current branch's diff against the base branch for structural issues that tests don't catch.
 
 ---
 
@@ -43,7 +43,7 @@ Before reviewing code quality, check: **did they build what was requested - noth
 
 1. Read `TODOS.md` (if it exists). Read PR description (`gh pr view --json body --jq .body 2>/dev/null || true`).
    Read commit messages (`git log origin/<base>..HEAD --oneline`).
-   **If no PR exists:** rely on commit messages and TODOS.md for stated intent - this is the common case since /review runs before /ship (full gstack only) creates the PR.
+   **If no PR exists:** rely on commit messages and TODOS.md for stated intent - this is the common case since /gl-review runs before /ship (full gstack only) creates the PR.
 2. Identify the **stated intent** - what was this branch supposed to accomplish?
 3. Run `git diff origin/<base>...HEAD --stat` and compare the files changed against the stated intent.
 
@@ -341,7 +341,7 @@ higher confidence.
 ### Detect stack and scope
 
 ```bash
-source <($HOME/.gstack-lite/bin/gstack-lite-diff-scope <base> 2>/dev/null) || true
+source <($HOME/.gstack-lite/bin/gl-diff-scope <base> 2>/dev/null) || true
 # Detect stack for specialist context
 STACK=""
 [ -f Gemfile ] && STACK="${STACK}ruby "
@@ -689,9 +689,9 @@ If no documentation files exist, skip this step silently.
 
 ---
 
-## Step 5.7: Adversarial review (always-on)
+## Step 5.7: Adversarial review
 
-Every diff gets adversarial review from both Claude and Codex. LOC is not a proxy for risk - a 5-line auth change can be critical.
+Every diff should get at least one adversarial pass. LOC is not a proxy for risk - a 5-line auth change can be critical.
 
 **Detect diff size and tool availability:**
 
@@ -699,93 +699,29 @@ Every diff gets adversarial review from both Claude and Codex. LOC is not a prox
 DIFF_INS=$(git diff origin/<base> --stat | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo "0")
 DIFF_DEL=$(git diff origin/<base> --stat | tail -1 | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo "0")
 DIFF_TOTAL=$((DIFF_INS + DIFF_DEL))
-# Legacy opt-out - only gates Codex passes, Claude always runs
 echo "DIFF_SIZE: $DIFF_TOTAL"
-echo "OLD_CFG: ${OLD_CFG:-not_set}"
 ```
 
-If `OLD_CFG` is `disabled`: skip Codex passes only. host adversarial subagent still runs (it's free and fast). Jump to the "host adversarial subagent" section.
+### Host adversarial subagent
 
-**User override:** If the user explicitly requested "full review", "structured review", or "P1 gate", also run the Codex structured review regardless of diff size.
-
----
-
-### host adversarial subagent (always runs)
-
-Dispatch via the Agent tool. The subagent has fresh context - no checklist bias from the structured review. This genuine independence catches things the primary reviewer is blind to.
+If the host provides an agent/delegation tool, dispatch an adversarial subagent.
+The subagent has fresh context - no checklist bias from the structured review.
 
 Subagent prompt:
 "Read the diff for this branch with `git diff origin/<base>`. Think like an attacker and a chaos engineer. Your job is to find ways this code will fail in production. Look for: edge cases, race conditions, security holes, resource leaks, failure modes, silent data corruption, logic errors that produce wrong results silently, error handling that swallows failures, and trust boundary violations. Be adversarial. Be thorough. No compliments - just the problems. For each finding, classify as FIXABLE (you know how to fix it) or INVESTIGATE (needs human judgment)."
 
 Present findings under an `ADVERSARIAL REVIEW (host subagent):` header. **FIXABLE findings** flow into the same Fix-First pipeline as the structured review. **INVESTIGATE findings** are presented as informational.
 
-If the subagent fails or times out: "host adversarial subagent unavailable. Continuing."
+If the subagent fails, times out, or delegation is unavailable: say "host adversarial subagent unavailable. Continuing with the structured review only."
 
----
-
-### Codex adversarial challenge (always runs when available)
-
-If Codex is available AND `OLD_CFG` is NOT `disabled`:
-
-```bash
-TMPERR_ADV=$(mktemp /tmp/codex-adv-XXXXXXXX)
-_REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "ERROR: not in a git repo" >&2; exit 1; }
-```
-
-Set the Bash tool's `timeout` parameter to `300000` (5 minutes). Do NOT use the `timeout` shell command - it doesn't exist on macOS. After the command completes, read stderr:
-```bash
-cat "$TMPERR_ADV"
-```
-
-Present the full output verbatim. This is informational - it never blocks shipping.
-
-**Error handling:** All errors are non-blocking - adversarial review is a quality enhancement, not a prerequisite.
-- **Auth failure:** If stderr contains "auth", "login", "unauthorized", or "API key": "Codex authentication failed. Run \`codex login\` to authenticate."
-- **Timeout:** "Codex timed out after 5 minutes."
-- **Empty response:** "Codex returned no response. Stderr: <paste relevant error>."
-
-**Cleanup:** Run `rm -f "$TMPERR_ADV"` after processing.
-
-If Codex is NOT available: "Codex CLI not found - running Claude adversarial only. Install Codex for cross-model coverage: `npm install -g @openai/codex`"
-
----
-
-### Codex structured review (large diffs only, 200+ lines)
-
-If `DIFF_TOTAL >= 200` AND Codex is available AND `OLD_CFG` is NOT `disabled`:
-
-```bash
-TMPERR=$(mktemp /tmp/codex-review-XXXXXXXX)
-_REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "ERROR: not in a git repo" >&2; exit 1; }
-cd "$_REPO_ROOT"
-```
-
-Set the Bash tool's `timeout` parameter to `300000` (5 minutes). Do NOT use the `timeout` shell command - it doesn't exist on macOS. Present output under `CODEX SAYS (code review):` header.
-Check for `[P1]` markers: found -> `GATE: FAIL`, not found -> `GATE: PASS`.
-
-If GATE is FAIL, ask the user:
-```
-Codex found N critical issues in the diff.
-
-A) Investigate and fix now (recommended)
-B) Continue - review will still complete
-```
-
-
-Read stderr for errors (same error handling as Codex adversarial above).
-
-After stderr: `rm -f "$TMPERR"`
-
-If `DIFF_TOTAL < 200`: skip this section silently. The Claude + Codex adversarial passes provide sufficient coverage for smaller diffs.
+For large diffs (`DIFF_TOTAL >= 200`), spend extra time on a manual adversarial pass even if no subagent is available.
 
 ---
 
 ### Persist the review result
 
-After all passes complete, persist:
-```bash
-```
-Substitute: STATUS = "clean" if no findings across ALL passes, "issues_found" if any pass found issues. SOURCE = "both" if Codex ran, "claude" if only host subagent ran. GATE = the Codex structured review gate result ("pass"/"fail"), "skipped" if diff < 200, or "informational" if Codex was unavailable. If all passes failed, do NOT persist.
+After all passes complete, summarize the review status in the final output:
+STATUS = "clean" if no findings across all passes, "issues_found" if any pass found issues. SOURCE = "structured" if only the structured checklist ran, "structured+adversarial" if an adversarial pass ran.
 
 ---
 
@@ -799,8 +735,7 @@ ADVERSARIAL REVIEW SYNTHESIS (always-on, N lines):
   High confidence (found by multiple sources): [findings agreed on by >1 pass]
   Unique to structured review: [from earlier step]
   Unique to host adversarial: [from subagent]
-  Unique to Codex: [from codex adversarial or code review, if ran]
-  Models used: Claude structured yes  Claude adversarial yes/no  Codex yes/no
+  Passes used: structured yes  host adversarial yes/no
 ============================================================
 ```
 
@@ -810,7 +745,7 @@ High-confidence findings (agreed on by multiple sources) should be prioritized f
 
 ## Step 5.8: Persist Eng Review result
 
-After all review passes complete, persist the final `/review` outcome so `/ship (full gstack only)` can
+After all review passes complete, persist the final `/gl-review` outcome so `/ship (full gstack only)` can
 recognize that Eng Review was run on this branch.
 
 Run:

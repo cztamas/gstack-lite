@@ -1,10 +1,10 @@
 ---
-name: gstack-lite-qa-only
+name: gl-qa-only
 description: |
   Report-only QA testing. Systematically tests a web application and produces a
   structured report with health score, screenshots, and repro steps - but never
   fixes anything. Use when asked to "just report bugs", "qa report only", or
-  "test but don't fix". For the full test-fix-verify loop, use /qa instead.
+  "test but don't fix". For the full test-fix-verify loop, use /gl-qa instead.
   Proactively suggest when the user wants a bug report without any code changes. (gstack-lite)
   Voice triggers (speech-to-text aliases): "bug report", "just check for bugs".
 ---
@@ -25,7 +25,7 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /qa-only: Report-Only QA Testing
+# /gl-qa-only: Report-Only QA Testing
 
 You are a QA engineer. Test web applications like a real user - click everything, fill every form, check every state. Produce a structured report with evidence. **NEVER fix anything.**
 
@@ -77,10 +77,10 @@ Before falling back to git diff heuristics, check for richer test plan sources:
 1. **Project-scoped test plans:** Check `$HOME/.gstack-lite/projects/` for recent `*-test-plan-*.md` files for this repo
    ```bash
    setopt +o nomatch 2>/dev/null || true  # zsh compat
-   eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+   eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
    ls -t $HOME/.gstack-lite/projects/$SLUG/*-test-plan-*.md 2>/dev/null | head -1
    ```
-2. **Conversation context:** Check if a prior `/plan-eng-review` or `/plan-ceo-review` produced test plan output in this conversation
+2. **Conversation context:** Check if a prior `/gl-plan-eng-review` or `/gl-plan-ceo-review` produced test plan output in this conversation
 3. **Use whichever source is richer.** Fall back to git diff analysis only if neither is available.
 
 ---
@@ -89,7 +89,7 @@ Before falling back to git diff heuristics, check for richer test plan sources:
 
 ### Diff-aware (automatic when on a feature branch with no URL)
 
-This is the **primary mode** for developers verifying their work. When the user says `/qa` without a URL and the repo is on a feature branch, automatically:
+This is the **primary mode** for developers verifying their work. When the user says `/gl-qa` without a URL and the repo is on a feature branch, automatically:
 
 1. **Analyze the branch diff** to understand what changed:
    ```bash
@@ -105,7 +105,7 @@ This is the **primary mode** for developers verifying their work. When the user 
    - API endpoints -> test them directly with `$B js "await fetch('/api/...')"`
    - Static pages (markdown, HTML) -> navigate to them directly
 
-   **If no obvious pages/routes are identified from the diff:** Do not skip browser testing. The user invoked /qa because they want browser-based verification. Fall back to Quick mode - navigate to the homepage, follow the top 5 navigation targets, check console for errors, and test any interactive elements found. Backend, config, and infrastructure changes affect app behavior - always verify the app still works.
+   **If no obvious pages/routes are identified from the diff:** Do not skip browser testing. The user invoked /gl-qa because they want browser-based verification. Fall back to Quick mode - navigate to the homepage, follow the top 5 navigation targets, check console for errors, and test any interactive elements found. Backend, config, and infrastructure changes affect app behavior - always verify the app still works.
 
 3. **Detect the running app** - check common local dev ports:
    ```bash
@@ -361,7 +361,7 @@ Minimum 0 per category.
 9. **Never delete output files.** Screenshots and reports accumulate - that's intentional.
 10. **Use `snapshot -C` for tricky UIs.** Finds clickable divs that the accessibility tree misses.
 11. **Show screenshots to the user.** After every `$B screenshot`, `$B snapshot -a -o`, or `$B responsive` command, use the Read tool on the output file(s) so the user can see them inline. For `responsive` (3 files), Read all three. This is critical - without it, screenshots are invisible to the user.
-12. **Never refuse to use the browser.** When the user invokes /qa or /qa-only, they are requesting browser-based testing. Never suggest evals, unit tests, or other alternatives as a substitute. Even if the diff appears to have no UI changes, backend changes affect app behavior - always open the browser and test.
+12. **Never refuse to use the browser.** When the user invokes /gl-qa or /gl-qa-only, they are requesting browser-based testing. Never suggest evals, unit tests, or other alternatives as a substitute. Even if the diff appears to have no UI changes, backend changes affect app behavior - always open the browser and test.
 
 ---
 
@@ -373,7 +373,7 @@ Write the report to both local and project-scoped locations:
 
 **Project-scoped:** Write test outcome artifact for cross-session context:
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
 ```
 Write to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-test-outcome-{datetime}.md`
 
@@ -396,5 +396,5 @@ Report filenames use the domain and date: `qa-report-myapp-com-2026-03-12.md`
 
 ## Additional Rules (qa-only specific)
 
-11. **Never fix bugs.** Find and document only. Do not read source code, edit files, or suggest fixes in the report. Your job is to report what's broken, not to fix it. Use `/qa` for the test-fix-verify loop.
-12. **No test framework detected?** If the project has no test infrastructure (no test config files, no test directories), include in the report summary: "No test framework detected. Run `/qa` to bootstrap one and enable regression test generation."
+11. **Never fix bugs.** Find and document only. Do not read source code, edit files, or suggest fixes in the report. Your job is to report what's broken, not to fix it. Use `/gl-qa` for the test-fix-verify loop.
+12. **No test framework detected?** If the project has no test infrastructure (no test config files, no test directories), include in the report summary: "No test framework detected. Run `/gl-qa` to bootstrap one and enable regression test generation."

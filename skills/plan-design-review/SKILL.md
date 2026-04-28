@@ -1,10 +1,10 @@
 ---
-name: gstack-lite-plan-design-review
+name: gl-plan-design-review
 description: |
   Designer's eye plan review - interactive, like CEO and Eng review.
   Rates each design dimension 0-10, explains what would make it a 10,
   then fixes the plan to get there. Works in plan mode. For live site
-  visual audits, use /design-review. Use when asked to "review the design plan"
+  visual audits, use /gl-design-review. Use when asked to "review the design plan"
   or "design critique".
   Proactively suggest when the user has a plan with UI/UX components that
   should be reviewed before implementation. (gstack-lite)
@@ -26,7 +26,7 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /plan-design-review: Designer's Eye Plan Review
+# /gl-plan-design-review: Designer's Eye Plan Review
 
 You are a senior product designer reviewing a PLAN - not a live site. Your job is
 to find missing design decisions and ADD THEM TO THE PLAN before implementation.
@@ -271,7 +271,7 @@ Explain what a 10 looks like for THIS plan.
 
 ### 0B. DESIGN.md Status
 - If DESIGN.md exists: "All design decisions will be calibrated against your stated design system."
-- If no DESIGN.md: "No design system found. Recommend running /design-consultation first. Proceeding with universal design principles."
+- If no DESIGN.md: "No design system found. Recommend running /gl-design-consultation first. Proceeding with universal design principles."
 
 ### 0C. Existing Design Leverage
 What existing UI patterns, components, or design decisions in the codebase should this plan reuse? Don't reinvent what already works.
@@ -310,7 +310,7 @@ Allowed commands under this exception:
 First, set up the output directory. Name it after the screen/feature being designed and today's date:
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 _DESIGN_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/<screen-name>-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
@@ -319,7 +319,7 @@ echo "DESIGN_DIR: $_DESIGN_DIR"
 Replace `<screen-name>` with a descriptive kebab-case name (e.g., `homepage-variants`, `settings-page`, `onboarding-flow`).
 
 **Generate mockups ONE AT A TIME in this skill.** The inline review flow generates
-fewer variants and benefits from sequential control. Note: /design-shotgun uses
+fewer variants and benefits from sequential control. Note: /gl-design-shotgun uses
 parallel Agent subagents for variant generation, which works at Tier 2+ (15+ RPM).
 The sequential constraint here is specific to plan-design-review's inline pattern.
 
@@ -450,7 +450,7 @@ Note which direction was approved. This becomes the visual reference for all sub
 
 **Multiple variants/screens:** If the user asked for multiple variants (e.g., "5 versions of the homepage"), generate ALL as separate variant sets with their own comparison boards. Each screen/variant set gets its own subdirectory under `designs/`. Complete all mockup generation and user selection before starting review passes.
 
-**If `DESIGN_NOT_AVAILABLE`:** Tell the user: "The gstack designer isn't set up yet. Run `$D setup` to enable visual mockups. Proceeding with text-only review, but you're missing the best part." Then proceed to review passes with text-based review.
+**If `DESIGN_NOT_AVAILABLE`:** Tell the user: "The optional lite design binary is not available. Proceeding with text-only review." Then proceed to review passes with text-based review.
 
 ## The 0-10 Rating Method
 
@@ -464,7 +464,7 @@ Pattern:
 5. user question if there's a genuine design choice to resolve
 6. Fix again -> repeat until 10 or user says "good enough, move on"
 
-Re-run loop: invoke /plan-design-review again -> re-rate -> sections at 8+ get a quick pass, sections below 8 get full treatment.
+Re-run loop: invoke /gl-plan-design-review again -> re-rate -> sections at 8+ get a quick pass, sections below 8 get full treatment.
 
 ### "Show me what 10/10 looks like" (requires design binary)
 
@@ -600,7 +600,7 @@ If visual mockups were generated in Step 0.5, evaluate them against the AI slop 
 
 ### Pass 5: Design System Alignment
 Rate 0-10: Does the plan align with DESIGN.md?
-FIX TO 10: If DESIGN.md exists, annotate with specific tokens/components. If no DESIGN.md, flag the gap and recommend `/design-consultation`.
+FIX TO 10: If DESIGN.md exists, annotate with specific tokens/components. If no DESIGN.md, flag the gap and recommend `/gl-design-consultation`.
 Flag any new component - does it fit the existing vocabulary?
 **STOP.** user question once per issue. Do NOT batch. Recommend + WHY.
 
@@ -685,7 +685,7 @@ Then present options: **A)** Add to TODOS.md **B)** Skip - not valuable enough *
   +====================================================================+
 ```
 
-If all passes 8+: "Plan is design-complete. Run /design-review after implementation for visual QA."
+If all passes 8+: "Plan is design-complete. Run /gl-design-review after implementation for visual QA."
 If any below 8: note what's unresolved and why (user chose to defer).
 
 ### Unresolved Decisions
@@ -741,9 +741,9 @@ Produce this markdown table:
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
-| CEO Review | \`/plan-ceo-review\` | Scope & strategy | {runs} | {status} | {findings} |
-| Eng Review | \`/plan-eng-review\` | Architecture & tests (required) | {runs} | {status} | {findings} |
-| Design Review | \`/plan-design-review\` | UI/UX gaps | {runs} | {status} | {findings} |
+| CEO Review | \`/gl-plan-ceo-review\` | Scope & strategy | {runs} | {status} | {findings} |
+| Eng Review | \`/gl-plan-eng-review\` | Architecture & tests (required) | {runs} | {status} | {findings} |
+| Design Review | \`/gl-plan-design-review\` | UI/UX gaps | {runs} | {status} | {findings} |
 | DX Review | \`/plan-devex-review\` | Developer experience gaps | {runs} | {status} | {findings} |
 \`\`\`
 

@@ -1,9 +1,10 @@
 ---
-name: gstack-lite-freeze
+name: gl-freeze
 description: |
-  Restrict file edits to a specific directory for the session. Blocks Edit and
-  Write outside the allowed path. Use when debugging to prevent accidentally
-  "fixing" unrelated code, or when you want to scope changes to one module.
+  Restrict file edits to a specific directory for the session. Records an
+  agent-scoped edit boundary so the workflow stays inside the allowed path.
+  Use when debugging to prevent accidentally "fixing" unrelated code, or when
+  you want to scope changes to one module.
   Use when asked to "freeze", "restrict edits", "only edit this folder",
   or "lock down edits". (gstack-lite)
 ---
@@ -24,10 +25,10 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /freeze - Restrict Edits to a Directory
+# /gl-freeze - Restrict Edits to a Directory
 
-Lock file edits to a specific directory. Any Edit or Write operation targeting
-a file outside the allowed path will be **blocked** (not just warned).
+Lock intended file edits to a specific directory. Any edit outside the allowed
+path is out of scope unless the user explicitly widens the boundary.
 
 ```bash
 mkdir -p $HOME/.gstack-lite/analytics
@@ -37,7 +38,7 @@ mkdir -p $HOME/.gstack-lite/analytics
 
 Ask the user which directory to restrict edits to. Ask the user:
 
-- Question: "Which directory should I restrict edits to? Files outside this path will be blocked from editing."
+- Question: "Which directory should I restrict edits to? I will keep edits inside this path unless you explicitly widen the boundary."
 - Text input (not multiple choice) - the user types a path.
 
 Once the user provides a directory path:
@@ -57,22 +58,22 @@ echo "$FREEZE_DIR" > "$STATE_DIR/freeze-dir.txt"
 echo "Freeze boundary set: $FREEZE_DIR"
 ```
 
-Tell the user: "Edits are now restricted to `<path>/`. Any Edit or Write
-outside this directory will be blocked. To change the boundary, run `/freeze`
-again. To remove it, run `/unfreeze` or end the session."
+Tell the user: "Edits are now restricted to `<path>/`. I will not edit outside
+this directory unless you explicitly widen the boundary. To change the boundary,
+run `/gl-freeze` again. To remove it, run `/gl-unfreeze` or end the session."
 
 ## How it works
 
-The hook reads `file_path` from the Edit/Write tool input JSON, then checks
-whether the path starts with the freeze directory. If not, it returns
-`permissionDecision: "deny"` to block the operation.
+The freeze boundary persists for the session via the state file. Agents should
+read this file before editing and keep changes inside the recorded path.
 
-The freeze boundary persists for the session via the state file. The hook
-script reads it on every Edit/Write invocation.
+This lite pack does not install host hooks or global agent settings. If a host
+environment has its own hook integration, it may also read the same state file
+to enforce the boundary mechanically.
 
 ## Notes
 
 - The trailing `/` on the freeze directory prevents `/src` from matching `/src-old`
-- Freeze applies to Edit and Write tools only - Read, Bash, Glob, Grep are unaffected
-- This prevents accidental edits, not a security boundary - Bash commands like `sed` can still modify files outside the boundary
-- To deactivate, run `/unfreeze` or end the conversation
+- Freeze is an agent workflow boundary, not a security boundary
+- Bash commands like `sed` can still modify files outside the boundary; do not run write commands outside the frozen path
+- To deactivate, run `/gl-unfreeze` or end the conversation

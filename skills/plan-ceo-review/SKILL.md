@@ -1,5 +1,5 @@
 ---
-name: gstack-lite-plan-ceo-review
+name: gl-plan-ceo-review
 description: |
   CEO/founder-mode plan review. Rethink the problem, find the 10-star product,
   challenge premises, expand scope when it creates a better product. Four modes:
@@ -114,7 +114,7 @@ DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/nu
 [ -z "$DESIGN" ] && DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 ```
-If a design doc exists (from `/office-hours`), read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design.
+If a design doc exists (from `/gl-office-hours`), read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design.
 
 **Handoff note check** (reuses $SLUG and $BRANCH from the design doc check above):
 ```bash
@@ -124,7 +124,7 @@ HANDOFF=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/
 ```
 If this block runs in a separate shell from the design doc check, recompute $SLUG and $BRANCH first using the same commands from that block.
 If a handoff note is found: read it. This contains system audit findings and discussion
-from a prior CEO review session that paused so the user could run `/office-hours`. Use it
+from a prior CEO review session that paused so the user could run `/gl-office-hours`. Use it
 as additional context alongside the design doc. The handoff note helps you avoid re-asking
 questions the user already answered. Do NOT skip any steps - run the full review, but use
 the handoff note to inform your analysis and avoid redundant questions.
@@ -139,26 +139,26 @@ skill before proceeding.
 
 Say to the user by asking the user:
 
-> "No design doc found for this branch. `/office-hours` produces a structured problem
+> "No design doc found for this branch. `/gl-office-hours` produces a structured problem
 > statement, premise challenge, and explored alternatives - it gives this review much
 > sharper input to work with. Takes about 10 minutes. The design doc is per-feature,
 > not per-product - it captures the thinking behind this specific change."
 
 Options:
-- A) Run /office-hours now (we'll pick up the review right after)
+- A) Run /gl-office-hours now (we'll pick up the review right after)
 - B) Skip - proceed with standard review
 
 If they skip: "No worries - standard review. If you ever want sharper input, try
-/office-hours first next time." Then proceed normally. Do not re-offer later in the session.
+/gl-office-hours first next time." Then proceed normally. Do not re-offer later in the session.
 
 If they choose A:
 
-Say: "Running /office-hours inline. Once the design doc is ready, I'll pick up
+Say: "Running /gl-office-hours inline. Once the design doc is ready, I'll pick up
 the review right where we left off."
 
-Read the `/office-hours` skill file at `$HOME/.gstack-lite/office-hours/SKILL.md` using the Read tool.
+Read the `/gl-office-hours` skill file at `$HOME/.gstack-lite/office-hours/SKILL.md` using the Read tool.
 
-**If unreadable:** Skip with "Could not load /office-hours - skipping." and continue.
+**If unreadable:** Skip with "Could not load /gl-office-hours - skipping." and continue.
 
 Follow its instructions from top to bottom, **skipping these sections** (already handled by the parent skill):
 - Preamble (run first)
@@ -176,7 +176,7 @@ Follow its instructions from top to bottom, **skipping these sections** (already
 
 Execute every other section at full depth. When the loaded skill's instructions are complete, continue with the next step below.
 
-After /office-hours completes, re-run the design doc check:
+After /gl-office-hours completes, re-run the design doc check:
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
 SLUG=$($HOME/.gstack-lite/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
@@ -191,20 +191,20 @@ If none was produced (user may have cancelled), proceed with standard review.
 
 **Mid-session detection:** During Step 0A (Premise Challenge), if the user can't
 articulate the problem, keeps changing the problem statement, answers with "I'm not
-sure," or is clearly exploring rather than reviewing - offer `/office-hours`:
+sure," or is clearly exploring rather than reviewing - offer `/gl-office-hours`:
 
 > "It sounds like you're still figuring out what to build - that's totally fine, but
-> that's what /office-hours is designed for. Want to run /office-hours right now?
+> that's what /gl-office-hours is designed for. Want to run /gl-office-hours right now?
 > We'll pick up right where we left off."
 
-Options: A) Yes, run /office-hours now. B) No, keep going.
+Options: A) Yes, run /gl-office-hours now. B) No, keep going.
 If they keep going, proceed normally - no guilt, no re-asking.
 
 If they choose A:
 
-Read the `/office-hours` skill file at `$HOME/.gstack-lite/office-hours/SKILL.md` using the Read tool.
+Read the `/gl-office-hours` skill file at `$HOME/.gstack-lite/office-hours/SKILL.md` using the Read tool.
 
-**If unreadable:** Skip with "Could not load /office-hours - skipping." and continue.
+**If unreadable:** Skip with "Could not load /gl-office-hours - skipping." and continue.
 
 Follow its instructions from top to bottom, **skipping these sections** (already handled by the parent skill):
 - Preamble (run first)
@@ -358,7 +358,7 @@ Both are outcome-framed. Only one makes the user feel the cathedral. Lead with t
 After the opt-in/cherry-pick ceremony, write the plan to disk so the vision and decisions survive beyond this conversation. Only run this step for EXPANSION and SELECTIVE EXPANSION modes.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG/ceo-plans
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG/ceo-plans
 ```
 
 Before writing, check for existing CEO plans in the ceo-plans/ directory. If any are >30 days old or their branch has been merged/deleted, offer to archive them:
@@ -375,7 +375,7 @@ Write to `$HOME/.gstack-lite/projects/$SLUG/ceo-plans/{date}-{feature-slug}.md` 
 status: ACTIVE
 ---
 # CEO Plan: {Feature Name}
-Generated by /plan-ceo-review on {date}
+Generated by /gl-plan-ceo-review on {date}
 Branch: {branch} | Mode: {EXPANSION / SELECTIVE EXPANSION}
 Repo: {owner/repo}
 
@@ -737,7 +737,7 @@ Evaluate:
 **Reminder: Do NOT make any code changes. Review only.**
 
 ### Section 11: Design & UX Review (skip if no UI scope detected)
-The CEO calling in the designer. Not a pixel-level audit - that's /plan-design-review and /design-review. This is ensuring the plan has design intentionality.
+The CEO calling in the designer. Not a pixel-level audit - that's /gl-plan-design-review and /gl-design-review. This is ensuring the plan has design intentionality.
 
 Evaluate:
 * Information architecture - what does the user see first, second, third?
@@ -755,12 +755,12 @@ Evaluate:
 
 Required ASCII diagram: user flow showing screens/states and transitions.
 
-If this plan has significant UI scope, recommend: "Consider running /plan-design-review for a deep design review of this plan before implementation."
+If this plan has significant UI scope, recommend: "Consider running /gl-plan-design-review for a deep design review of this plan before implementation."
 **STOP.** user question once per issue. Do NOT batch. Recommend + WHY. If this section turned up zero findings, state "No issues, moving on" and proceed. If the section has findings, you MUST call user question as a tool_use - a finding with an "obvious fix" is still a finding and still needs user approval before any change lands in the plan. Do NOT proceed until the user responds.
 **Reminder: Do NOT make any code changes. Review only.**
 
 ## Post-Implementation Design Audit (if UI scope detected)
-After implementation, run `/design-review` on the live site to catch visual issues that can only be evaluated with rendered output.
+After implementation, run `/gl-design-review` on the live site to catch visual issues that can only be evaluated with rendered output.
 
 ## CRITICAL RULE - How to ask questions
 Follow the user question format from the Preamble above. Additional rules for plan reviews:
@@ -871,7 +871,7 @@ the review is complete and the context is no longer needed.
 
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 rm -f $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/dev/null || true
 ```
 
@@ -911,9 +911,9 @@ Produce this markdown table:
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
-| CEO Review | \`/plan-ceo-review\` | Scope & strategy | {runs} | {status} | {findings} |
-| Eng Review | \`/plan-eng-review\` | Architecture & tests (required) | {runs} | {status} | {findings} |
-| Design Review | \`/plan-design-review\` | UI/UX gaps | {runs} | {status} | {findings} |
+| CEO Review | \`/gl-plan-ceo-review\` | Scope & strategy | {runs} | {status} | {findings} |
+| Eng Review | \`/gl-plan-eng-review\` | Architecture & tests (required) | {runs} | {status} | {findings} |
+| Design Review | \`/gl-plan-design-review\` | UI/UX gaps | {runs} | {status} | {findings} |
 | DX Review | \`/plan-devex-review\` | Developer experience gaps | {runs} | {status} | {findings} |
 \`\`\`
 

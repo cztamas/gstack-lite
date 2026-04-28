@@ -1,9 +1,9 @@
 ---
-name: gstack-lite-design-html
+name: gl-design-html
 description: |
   Design finalization: generates production-quality Pretext-native HTML/CSS.
-  Works with approved mockups from /design-shotgun, CEO plans from /plan-ceo-review,
-  design review context from /plan-design-review, or from scratch with a user
+  Works with approved mockups from /gl-design-shotgun, CEO plans from /gl-plan-ceo-review,
+  design review context from /gl-plan-design-review, or from scratch with a user
   description. Text actually reflows, heights are computed, layouts are dynamic.
   30KB overhead, zero deps. Smart API routing: picks the right Pretext patterns
   for each design type. Use when: "finalize this design", "turn this into HTML",
@@ -28,7 +28,7 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /design-html: Pretext-Native HTML Engine
+# /gl-design-html: Pretext-Native HTML Engine
 
 You generate production-quality HTML where text actually works correctly. Not CSS
 approximations. Computed layout via Pretext. Text reflows on resize, heights adjust
@@ -184,7 +184,7 @@ If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrad
 ## Step 0: Input Detection
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 ```
 
 Detect what design context exists for this project. Run all four checks:
@@ -244,13 +244,13 @@ Read whichever context exists:
 - If DESIGN.md found: read it for design tokens and constraints.
 
 Ask the user:
-> Found [CEO plan from /plan-ceo-review | design review variants from /plan-design-review | both]
+> Found [CEO plan from /gl-plan-ceo-review | design review variants from /gl-plan-design-review | both]
 > but no approved design mockup.
-> A) Run /design-shotgun - explore design variants based on the existing plan context
+> A) Run /gl-design-shotgun - explore design variants based on the existing plan context
 > B) Skip mockups - I'll design the HTML directly from the plan context
 > C) I have a PNG - let me provide the path
 
-If A: tell the user to run /design-shotgun, then come back to /design-html.
+If A: tell the user to run /gl-design-shotgun, then come back to /gl-design-html.
 If B: proceed to Step 1 in "plan-driven mode." There is no approved PNG, the plan is
 the source of truth. Ask the user for a screen name to use for the output directory
 (e.g., "landing-page", "dashboard", "pricing").
@@ -262,12 +262,12 @@ If none of the above produced any context:
 
 Ask the user:
 > No design context found for this project. How do you want to start?
-> A) Run /plan-ceo-review first - think through the product strategy before designing
-> B) Run /plan-design-review first - design review with visual mockups
-> C) Run /design-shotgun - jump straight to visual design exploration
+> A) Run /gl-plan-ceo-review first - think through the product strategy before designing
+> B) Run /gl-plan-design-review first - design review with visual mockups
+> C) Run /gl-design-shotgun - jump straight to visual design exploration
 > D) Just describe it - tell me what you want and I'll design the HTML live
 
-If A, B, or C: tell the user to run that skill, then come back to /design-html.
+If A, B, or C: tell the user to run that skill, then come back to /gl-design-html.
 If D: proceed to Step 1 in "freeform mode." Ask the user for a screen name.
 
 ### Context summary
@@ -676,8 +676,8 @@ Extract from the HTML:
 
 Ask the user:
 > No DESIGN.md found. I can extract the design tokens from the HTML we just built
-> and create a DESIGN.md for your project. This means future /design-shotgun and
-> /design-html runs will be style-consistent automatically.
+> and create a DESIGN.md for your project. This means future /gl-design-shotgun and
+> /gl-design-html runs will be style-consistent automatically.
 > A) Create DESIGN.md from these tokens
 > B) Skip - I'll handle the design system later
 
@@ -730,5 +730,5 @@ Ask the user:
   use content from the plan. In freeform mode, generate realistic content based on the
   user's description. Never use "Lorem ipsum", "Your text here", or placeholder content.
 
-- **One page per invocation.** For multi-page designs, run /design-html once per page.
+- **One page per invocation.** For multi-page designs, run /gl-design-html once per page.
   Each run produces one HTML file.

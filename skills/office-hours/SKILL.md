@@ -1,5 +1,5 @@
 ---
-name: gstack-lite-office-hours
+name: gl-office-hours
 description: |
   YC Office Hours - two modes. Startup mode: six forcing questions that expose
   demand reality, status quo, desperate specificity, narrowest wedge, observation,
@@ -11,7 +11,7 @@ description: |
   a new product idea, asks whether something is worth building, wants to think
   through design decisions for something that doesn't exist yet, or is exploring
   a concept before any code is written.
-  Use before /plan-ceo-review or /plan-eng-review. (gstack-lite)
+  Use before /gl-plan-ceo-review or /gl-plan-eng-review. (gstack-lite)
 ---
 ## Lite Preamble
 
@@ -44,7 +44,7 @@ You are a **YC office hours partner**. Your job is to ensure the problem is unde
 Understand the project and the area the user wants to change.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 ```
 
 1. Read `CLAUDE.md`, `TODOS.md` (if they exist).
@@ -291,7 +291,7 @@ If no matches found, proceed silently.
 
 Read ETHOS.md for the full Search Before Building framework (three layers, eureka moments). The preamble's Search Before Building section has the ETHOS.md path.
 
-After understanding the problem through questioning, search for what the world thinks. This is NOT competitive research (that's /design-consultation's job). This is understanding conventional wisdom so you can evaluate where it's wrong.
+After understanding the problem through questioning, search for what the world thinks. This is NOT competitive research (that's /gl-design-consultation's job). This is understanding conventional wisdom so you can evaluate where it's wrong.
 
 **Privacy gate:** Before searching, ask the user: "I'd like to search for what the world thinks about this space to inform our discussion. This sends generalized category terms (not your specific idea) to a search provider. OK to proceed?"
 Options: A) Yes, search away  B) Skip - keep this session private
@@ -400,7 +400,7 @@ Generating visual mockups of the proposed design... (say "skip" if you don't nee
 **Step 1: Set up the design directory**
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 _DESIGN_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/mockup-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
@@ -496,8 +496,8 @@ $B goto "file://$SKETCH_FILE"
 $B screenshot /tmp/gstack-sketch.png
 ```
 
-If `$B` is not available (browse binary not set up), skip the render step. Tell the
-user: "Visual sketch requires the browse binary. Run the setup script to enable it."
+If `$B` is not available (browse binary missing), skip the render step. Tell the
+user: "Visual sketch rendering requires the optional browse binary. Continuing with the written wireframe."
 
 **Step 4: Present and iterate**
 
@@ -510,34 +510,22 @@ If they approve or say "good enough," proceed.
 
 Reference the wireframe screenshot in the design doc's "Recommended Approach" section.
 The screenshot file at `/tmp/gstack-sketch.png` can be referenced by downstream skills
-(`/plan-design-review`, `/design-review`) to see what was originally envisioned.
+(`/gl-plan-design-review`, `/gl-design-review`) to see what was originally envisioned.
 
 **Step 6: Outside design voices** (optional)
 
 After the wireframe is approved, offer outside design perspectives:
 
-```bash
-```
-
-If Codex is available, ask the user:
-> "Want outside design perspectives on the chosen approach? Codex proposes a visual thesis, content plan, and interaction ideas. A host subagent proposes an alternative aesthetic direction."
+Ask the user:
+> "Want an outside design perspective on the chosen approach? A host subagent can propose an alternative aesthetic direction."
 >
 > A) Yes - get outside design voices
 > B) No - proceed without
 
-If user chooses A, launch both voices simultaneously:
-
-1. **Codex** (via Bash, `model_reasoning_effort="medium"`):
-```bash
-TMPERR_SKETCH=$(mktemp /tmp/codex-sketch-XXXXXXXX)
-_REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "ERROR: not in a git repo" >&2; exit 1; }
-```
-Use a 5-minute timeout (`timeout: 300000`). After completion: `cat "$TMPERR_SKETCH" && rm -f "$TMPERR_SKETCH"`
-
-2. **host subagent** (via Agent tool):
+If user chooses A and the host provides an agent/delegation tool, launch a host subagent:
 "For this product approach, what design direction would you recommend? What aesthetic, typography, and interaction patterns fit? What would make this approach feel inevitable to the user? Be specific - font names, hex colors, spacing values."
 
-Present Codex output under `CODEX SAYS (design sketch):` and subagent output under `CLAUDE SUBAGENT (design direction):`.
+Present output under `OUTSIDE DESIGN PERSPECTIVE:`.
 Error handling: all non-blocking. On failure, skip and continue.
 
 ---
@@ -563,7 +551,7 @@ Count the signals. You'll use this count in Phase 6 to determine which tier of c
 Write the design document to the project directory.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
 USER=$(whoami)
 DATETIME=$(date +%Y%m%d-%H%M%S)
 ```
@@ -578,14 +566,14 @@ If `$PRIOR` exists, the new doc gets a `Supersedes:` field referencing it. This 
 Write to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-design-{datetime}.md`.
 
 After writing the design doc, tell the user:
-**"Design doc saved to: {full path}. Other skills (/plan-ceo-review, /plan-eng-review) will find it automatically."**
+**"Design doc saved to: {full path}. Other skills (/gl-plan-ceo-review, /gl-plan-eng-review) will find it automatically."**
 
 ### Startup mode design doc template:
 
 ```markdown
 # Design: {title}
 
-Generated by /office-hours on {date}
+Generated by /gl-office-hours on {date}
 Branch: {branch}
 Repo: {owner/repo}
 Status: DRAFT
@@ -648,7 +636,7 @@ Supersedes: {prior filename - omit this line if first design on this branch}
 ```markdown
 # Design: {title}
 
-Generated by /office-hours on {date}
+Generated by /gl-office-hours on {date}
 Branch: {branch}
 Repo: {owner/repo}
 Status: DRAFT
@@ -986,9 +974,9 @@ If E: proceed to next-skill recommendations.
 
 After the plea, suggest the next step:
 
-- **`/plan-ceo-review`** for ambitious features (EXPANSION mode) - rethink the problem, find the 10-star product
-- **`/plan-eng-review`** for well-scoped implementation planning - lock in architecture, tests, edge cases
-- **`/plan-design-review`** for visual/UX design review
+- **`/gl-plan-ceo-review`** for ambitious features (EXPANSION mode) - rethink the problem, find the 10-star product
+- **`/gl-plan-eng-review`** for well-scoped implementation planning - lock in architecture, tests, edge cases
+- **`/gl-plan-design-review`** for visual/UX design review
 
 The design doc at `$HOME/.gstack-lite/projects/` is automatically discoverable by downstream skills - they will read it during their pre-review system audit.
 

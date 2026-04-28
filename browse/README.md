@@ -1,6 +1,6 @@
 # Browse Runtime
 
-The `gstack-lite-browse`, `gstack-lite-qa`, `gstack-lite-qa-only`, and `gstack-lite-design-review` skills look for an optional browser binary at:
+The `gl-browse`, `gl-qa`, `gl-qa-only`, and `gl-design-review` skills look for an optional browser binary at:
 
 ```text
 $HOME/.gstack-lite/browse/dist/browse

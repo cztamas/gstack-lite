@@ -1,10 +1,10 @@
 ---
-name: gstack-lite-design-consultation
+name: gl-design-consultation
 description: |
   Design consultation: understands your product, researches the landscape, proposes a
   complete design system (aesthetic, typography, color, layout, spacing, motion), and
   generates font+color preview pages. Creates DESIGN.md as your project's design source
-  of truth. For existing sites, use /plan-design-review to infer the system instead.
+  of truth. For existing sites, use /gl-plan-design-review to infer the system instead.
   Use when asked to "design system", "brand guidelines", or "create DESIGN.md".
   Proactively suggest when starting a new project's UI with no existing
   design system or DESIGN.md. (gstack-lite)
@@ -26,7 +26,7 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /design-consultation: Your Design System, Built Together
+# /gl-design-consultation: Your Design System, Built Together
 
 You are a senior product designer with strong opinions about typography, color, and visual systems. You don't present menus - you listen, think, research, and propose. You're opinionated but not dogmatic. You explain your reasoning and welcome pushback.
 
@@ -57,14 +57,14 @@ Look for office-hours output:
 
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 ls $HOME/.gstack-lite/projects/$SLUG/*office-hours* 2>/dev/null | head -5
 ls .context/*office-hours* .context/attachments/*office-hours* 2>/dev/null | head -5
 ```
 
 If office-hours output exists, read it - the product context is pre-filled.
 
-If the codebase is empty and purpose is unclear, say: *"I don't have a clear picture of what you're building yet. Want to explore first with `/office-hours`? Once we know the product direction, we can set up the design system."*
+If the codebase is empty and purpose is unclear, say: *"I don't have a clear picture of what you're building yet. Want to explore first with `/gl-office-hours`? Once we know the product direction, we can set up the design system."*
 
 **Find the browse binary (optional - enables visual competitive research):**
 
@@ -378,7 +378,7 @@ This phase generates visual previews of the proposed design system. Two paths de
 Generate AI-rendered mockups showing the proposed design system applied to realistic screens for this product. This is far more powerful than an HTML preview - the user sees what their product could actually look like.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 _DESIGN_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/design-system-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
@@ -624,7 +624,7 @@ If `$D extract` was used in Phase 5 (Path A), use the extracted tokens as the pr
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| [today] | Initial design system created | Created by /design-consultation based on [product context / research] |
+| [today] | Initial design system created | Created by /gl-design-consultation based on [product context / research] |
 ```
 
 **Update CLAUDE.md** (or create it if it doesn't exist) - append this section:
@@ -646,7 +646,7 @@ List all decisions. Flag any that used agent defaults without explicit user conf
 
 After shipping DESIGN.md, if the session produced screen-level mockups or page layouts
 (not just system-level tokens), suggest:
-"Want to see this design system as working Pretext-native HTML? Run /design-html."
+"Want to see this design system as working Pretext-native HTML? Run /gl-design-html."
 
 ---
 

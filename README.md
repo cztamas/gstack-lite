@@ -20,7 +20,7 @@ Other hosts:
 ./install --all
 ```
 
-The installer creates namespaced skill symlinks such as `gstack-lite-review` and `gstack-lite-qa`, then links shared runtime assets into `$HOME/.gstack-lite`.
+The installer creates namespaced skill symlinks such as `gl-review` and `gl-qa`, then links shared runtime assets and unprefixed skill mirrors into `$HOME/.gstack-lite`.
 
 ## Uninstall
 
@@ -34,22 +34,22 @@ The installer creates namespaced skill symlinks such as `gstack-lite-review` and
 
 ## Skills
 
-- `gstack-lite-office-hours`
-- `gstack-lite-plan-ceo-review`
-- `gstack-lite-plan-eng-review`
-- `gstack-lite-plan-design-review`
-- `gstack-lite-design-consultation`
-- `gstack-lite-design-shotgun`
-- `gstack-lite-design-html`
-- `gstack-lite-design-review`
-- `gstack-lite-investigate`
-- `gstack-lite-review`
-- `gstack-lite-cso`
-- `gstack-lite-browse`
-- `gstack-lite-qa`
-- `gstack-lite-qa-only`
-- `gstack-lite-freeze`
-- `gstack-lite-unfreeze`
+- `gl-office-hours`
+- `gl-plan-ceo-review`
+- `gl-plan-eng-review`
+- `gl-plan-design-review`
+- `gl-design-consultation`
+- `gl-design-shotgun`
+- `gl-design-html`
+- `gl-design-review`
+- `gl-investigate`
+- `gl-review`
+- `gl-cso`
+- `gl-browse`
+- `gl-qa`
+- `gl-qa-only`
+- `gl-freeze`
+- `gl-unfreeze`
 
 ## Runtime Assets
 

@@ -15,7 +15,7 @@ Usage:
   ./install --all
 
 Installs namespaced gstack-lite skills as symlinks:
-  gstack-lite-office-hours, gstack-lite-review, ...
+  gl-office-hours, gl-review, ...
 
 The installer only writes to the selected host skill directory and
 $HOME/.gstack-lite for shared runtime assets.
@@ -87,6 +87,13 @@ install_runtime() {
       link_dir "$ROOT/$asset" "$STATE_DIR/$asset"
     fi
   done
+
+  for skill_dir in "$ROOT"/skills/*; do
+    [ -f "$skill_dir/SKILL.md" ] || continue
+    local skill
+    skill="$(basename "$skill_dir")"
+    link_dir "$skill_dir" "$STATE_DIR/$skill"
+  done
 }
 
 install_host() {
@@ -100,7 +107,7 @@ install_host() {
     [ -f "$skill_dir/SKILL.md" ] || continue
     local skill
     skill="$(basename "$skill_dir")"
-    local name="gstack-lite-$skill"
+    local name="gl-$skill"
     link_dir "$skill_dir" "$skills_dir/$name"
     linked+=("$name")
   done

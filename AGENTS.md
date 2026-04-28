@@ -13,10 +13,10 @@ Always-on safety guardrails:
 
 Default lite skills:
 
-- Planning/product: `gstack-lite-office-hours`, `gstack-lite-plan-ceo-review`, `gstack-lite-plan-eng-review`
-- Design: `gstack-lite-plan-design-review`, `gstack-lite-design-consultation`, `gstack-lite-design-shotgun`, `gstack-lite-design-html`, `gstack-lite-design-review`
-- Debugging/review/security: `gstack-lite-investigate`, `gstack-lite-review`, `gstack-lite-cso`
-- Browser QA: `gstack-lite-browse`, `gstack-lite-qa`, `gstack-lite-qa-only`
-- Safety: `gstack-lite-freeze`, `gstack-lite-unfreeze`
+- Planning/product: `gl-office-hours`, `gl-plan-ceo-review`, `gl-plan-eng-review`
+- Design: `gl-plan-design-review`, `gl-design-consultation`, `gl-design-shotgun`, `gl-design-html`, `gl-design-review`
+- Debugging/review/security: `gl-investigate`, `gl-review`, `gl-cso`
+- Browser QA: `gl-browse`, `gl-qa`, `gl-qa-only`
+- Safety: `gl-freeze`, `gl-unfreeze`
 
 Do not add telemetry, auto-upgrade hooks, GBrain sync, migrations, team-mode hooks, or global agent settings to this repo.

@@ -66,13 +66,43 @@ const stripSectionHeadings = [
   /^### Outside Voice Integration Rule\b/,
   /^## Design Outside Voices\b/,
   /^## Phase 3\.5: Cross-Model Second Opinion\b/,
+  /^### Codex adversarial challenge\b/,
+  /^### Codex structured review\b/,
 ];
 
-const forbiddenLine = /\b(gstack-(?:config|update-check|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)|codex\s+(?:exec|review)|which codex|CODEX_|GBrain|telemetry prompt|Remote telemetry|Local analytics|Session timeline|skill-usage\.jsonl|analytics\/skill-usage|builder-profile\.jsonl)\b/i;
+const forbiddenLine = /\b(gstack-(?:config|update-check|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)|codex\s+(?:exec|review)|which codex|CODEX_|CLAUDE_SKILL_DIR|GBrain|telemetry prompt|Remote telemetry|Local analytics|Session timeline|skill-usage\.jsonl|analytics\/skill-usage|builder-profile\.jsonl|check-freeze)\b/i;
+
+const liteSkillCommands = [
+  'office-hours',
+  'plan-ceo-review',
+  'plan-eng-review',
+  'plan-design-review',
+  'design-consultation',
+  'design-shotgun',
+  'design-html',
+  'design-review',
+  'investigate',
+  'review',
+  'cso',
+  'browse',
+  'qa-only',
+  'qa',
+  'freeze',
+  'unfreeze',
+];
+
+const liteSkillCommandPattern = new RegExp(`(^|[\\s(\\[{"'\`])/(?:${liteSkillCommands.join('|')})\\b`, 'g');
+
+function prefixLiteSkillCommands(markdown) {
+  return markdown.replace(liteSkillCommandPattern, (match, prefix) => {
+    const command = match.slice(prefix.length + 1);
+    return `${prefix}/gl-${command}`;
+  });
+}
 
 const pathRewrites = [
-  [/~\/\.claude\/skills\/gstack\/bin\/gstack-slug/g, '$HOME/.gstack-lite/bin/gstack-lite-slug'],
-  [/~\/\.claude\/skills\/gstack\/bin\/gstack-diff-scope/g, '$HOME/.gstack-lite/bin/gstack-lite-diff-scope'],
+  [/~\/\.claude\/skills\/gstack\/bin\/gstack-slug/g, '$HOME/.gstack-lite/bin/gl-slug'],
+  [/~\/\.claude\/skills\/gstack\/bin\/gstack-diff-scope/g, '$HOME/.gstack-lite/bin/gl-diff-scope'],
   [/~\/\.claude\/skills\/gstack\/browse\/dist\/browse/g, '$HOME/.gstack-lite/browse/dist/browse'],
   [/~\/\.claude\/skills\/gstack\/design\/dist\/design/g, '$HOME/.gstack-lite/design/dist/design'],
   [/~\/\.claude\/skills\/gstack\/design-html\/vendor\/pretext\.js/g, '$HOME/.gstack-lite/design-html/vendor/pretext.js'],
@@ -118,6 +148,9 @@ const hostNeutralRewrites = [
   [/use AskUserQuestion:/g, 'ask the user:'],
   [/AskUserQuestion:/g, 'Ask the user:'],
   [/AskUserQuestion/g, 'user question'],
+  [/Every diff gets adversarial review from both Claude and Codex\./g, 'Every diff should get at least one adversarial pass.'],
+  [/Visual sketch requires the browse binary\. Run the setup script to enable it\./g, 'Visual sketch rendering requires the optional browse binary. Continuing with the written wireframe.'],
+  [/The gstack(?:-lite)? designer isn't set up yet\. Run `\$D setup` to enable visual mockups\. Proceeding with text-only review, but you're missing the best part\./g, 'The optional lite design binary is not available. Proceeding with text-only review.'],
 ];
 
 const unicodeReplacements = [
@@ -199,7 +232,7 @@ function blockDescription(description) {
     .replace(/\(gstack\)/g, '(gstack-lite)')
     .replace(/\bgstack\b(?!-lite)/g, 'gstack-lite')
     .trim();
-  return toAscii(cleaned).split('\n').map((line) => `  ${line}`).join('\n');
+  return toAscii(prefixLiteSkillCommands(cleaned)).split('\n').map((line) => `  ${line}`).join('\n');
 }
 
 function findBody(source, skill) {
@@ -284,6 +317,8 @@ function normalizeBody(markdown) {
     out = out.replace(from, to);
   }
 
+  out = prefixLiteSkillCommands(out);
+
   out = stripSections(out);
   out = out.replace(
     /^If `NEEDS_SETUP`:\n1\. Tell the user:[\s\S]*?^   ```\n/gm,
@@ -299,7 +334,7 @@ async function importSkill(skill) {
   const source = await readFile(sourcePath, 'utf8');
   const { desc } = frontmatterOf(source);
   const body = normalizeBody(findBody(source, skill));
-  const output = `---\nname: gstack-lite-${skill}\ndescription: |\n${blockDescription(desc)}\n---\n${litePreamble}${body}`;
+  const output = `---\nname: gl-${skill}\ndescription: |\n${blockDescription(desc)}\n---\n${litePreamble}${body}`;
   const targetDir = path.join(repoRoot, 'skills', skill);
   await mkdir(targetDir, { recursive: true });
   await writeFile(path.join(targetDir, 'SKILL.md'), output);
@@ -346,12 +381,12 @@ async function importAssets() {
   await mkdir(path.join(repoRoot, 'bin'), { recursive: true });
   const slug = (await readFile(path.join(sourceRoot, 'bin', 'gstack-slug'), 'utf8'))
     .replaceAll('$HOME/.gstack', '$HOME/.gstack-lite')
-    .replaceAll('gstack-slug', 'gstack-lite-slug');
-  await writeFile(path.join(repoRoot, 'bin', 'gstack-lite-slug'), toAscii(slug), { mode: 0o755 });
+    .replaceAll('gstack-slug', 'gl-slug');
+  await writeFile(path.join(repoRoot, 'bin', 'gl-slug'), toAscii(slug), { mode: 0o755 });
 
   const diffScope = (await readFile(path.join(sourceRoot, 'bin', 'gstack-diff-scope'), 'utf8'))
-    .replaceAll('gstack-diff-scope', 'gstack-lite-diff-scope');
-  await writeFile(path.join(repoRoot, 'bin', 'gstack-lite-diff-scope'), toAscii(diffScope), { mode: 0o755 });
+    .replaceAll('gstack-diff-scope', 'gl-diff-scope');
+  await writeFile(path.join(repoRoot, 'bin', 'gl-diff-scope'), toAscii(diffScope), { mode: 0o755 });
 
   await copyIfExists(path.join(sourceRoot, 'browse', 'dist'), path.join(repoRoot, 'browse', 'dist'));
   await copyIfExists(path.join(sourceRoot, 'design', 'dist'), path.join(repoRoot, 'design', 'dist'));
@@ -361,7 +396,7 @@ async function importAssets() {
     path.join(sourceRoot, 'review', 'design-checklist.md'),
     path.join(repoRoot, 'review', 'design-checklist.md'),
     (text) => toAscii(text
-      .replaceAll('~/.claude/skills/gstack/bin/gstack-diff-scope', '$HOME/.gstack-lite/bin/gstack-lite-diff-scope')
+      .replaceAll('~/.claude/skills/gstack/bin/gstack-diff-scope', '$HOME/.gstack-lite/bin/gl-diff-scope')
       .replaceAll('~/.gstack', '$HOME/.gstack-lite')
       .replace(/\$HOME\/\.gstack(?!-lite)/g, '$HOME/.gstack-lite')
       .replaceAll('.gstack/', '.gstack-lite/')),

@@ -1,5 +1,5 @@
 ---
-name: gstack-lite-qa
+name: gl-qa
 description: |
   Systematically QA test a web application and fix bugs found. Runs QA testing,
   then iteratively fixes bugs in source code, committing each fix atomically and
@@ -8,7 +8,7 @@ description: |
   Proactively suggest when the user says a feature is ready for testing
   or asks "does this work?". Three tiers: Quick (critical/high only),
   Standard (+ medium), Exhaustive (+ cosmetic). Produces before/after health scores,
-  fix evidence, and a ship-readiness summary. For report-only mode, use /qa-only. (gstack-lite)
+  fix evidence, and a ship-readiness summary. For report-only mode, use /gl-qa-only. (gstack-lite)
   Voice triggers (speech-to-text aliases): "quality check", "test the app", "run QA".
 ---
 ## Lite Preamble
@@ -28,7 +28,7 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /qa: Test -> Fix -> Verify
+# /gl-qa: Test -> Fix -> Verify
 
 You are a QA engineer AND a bug-fix engineer. Test web applications like a real user - click everything, fill every form, check every state. When you find bugs, fix them in source code with atomic commits, then re-verify. Produce a structured report with before/after evidence.
 
@@ -66,7 +66,7 @@ git status --porcelain
 
 If the output is non-empty (working tree is dirty), **STOP** and ask the user:
 
-"Your working tree has uncommitted changes. /qa needs a clean tree so each bug fix gets its own atomic commit."
+"Your working tree has uncommitted changes. /gl-qa needs a clean tree so each bug fix gets its own atomic commit."
 
 - A) Commit my changes - commit all current changes with a descriptive message, then start QA
 - B) Stash my changes - stash, run QA, pop the stash after
@@ -265,10 +265,10 @@ Before falling back to git diff heuristics, check for richer test plan sources:
 1. **Project-scoped test plans:** Check `$HOME/.gstack-lite/projects/` for recent `*-test-plan-*.md` files for this repo
    ```bash
    setopt +o nomatch 2>/dev/null || true  # zsh compat
-   eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+   eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
    ls -t $HOME/.gstack-lite/projects/$SLUG/*-test-plan-*.md 2>/dev/null | head -1
    ```
-2. **Conversation context:** Check if a prior `/plan-eng-review` or `/plan-ceo-review` produced test plan output in this conversation
+2. **Conversation context:** Check if a prior `/gl-plan-eng-review` or `/gl-plan-ceo-review` produced test plan output in this conversation
 3. **Use whichever source is richer.** Fall back to git diff analysis only if neither is available.
 
 ---
@@ -279,7 +279,7 @@ Before falling back to git diff heuristics, check for richer test plan sources:
 
 ### Diff-aware (automatic when on a feature branch with no URL)
 
-This is the **primary mode** for developers verifying their work. When the user says `/qa` without a URL and the repo is on a feature branch, automatically:
+This is the **primary mode** for developers verifying their work. When the user says `/gl-qa` without a URL and the repo is on a feature branch, automatically:
 
 1. **Analyze the branch diff** to understand what changed:
    ```bash
@@ -295,7 +295,7 @@ This is the **primary mode** for developers verifying their work. When the user 
    - API endpoints -> test them directly with `$B js "await fetch('/api/...')"`
    - Static pages (markdown, HTML) -> navigate to them directly
 
-   **If no obvious pages/routes are identified from the diff:** Do not skip browser testing. The user invoked /qa because they want browser-based verification. Fall back to Quick mode - navigate to the homepage, follow the top 5 navigation targets, check console for errors, and test any interactive elements found. Backend, config, and infrastructure changes affect app behavior - always verify the app still works.
+   **If no obvious pages/routes are identified from the diff:** Do not skip browser testing. The user invoked /gl-qa because they want browser-based verification. Fall back to Quick mode - navigate to the homepage, follow the top 5 navigation targets, check console for errors, and test any interactive elements found. Backend, config, and infrastructure changes affect app behavior - always verify the app still works.
 
 3. **Detect the running app** - check common local dev ports:
    ```bash
@@ -551,7 +551,7 @@ Minimum 0 per category.
 9. **Never delete output files.** Screenshots and reports accumulate - that's intentional.
 10. **Use `snapshot -C` for tricky UIs.** Finds clickable divs that the accessibility tree misses.
 11. **Show screenshots to the user.** After every `$B screenshot`, `$B snapshot -a -o`, or `$B responsive` command, use the Read tool on the output file(s) so the user can see them inline. For `responsive` (3 files), Read all three. This is critical - without it, screenshots are invisible to the user.
-12. **Never refuse to use the browser.** When the user invokes /qa or /qa-only, they are requesting browser-based testing. Never suggest evals, unit tests, or other alternatives as a substitute. Even if the diff appears to have no UI changes, backend changes affect app behavior - always open the browser and test.
+12. **Never refuse to use the browser.** When the user invokes /gl-qa or /gl-qa-only, they are requesting browser-based testing. Never suggest evals, unit tests, or other alternatives as a substitute. Even if the diff appears to have no UI changes, backend changes affect app behavior - always open the browser and test.
 
 Record baseline health score at end of Phase 6.
 
@@ -664,7 +664,7 @@ The test MUST:
 - Include full attribution comment:
   ```
   // Regression: ISSUE-NNN - {what broke}
-  // Found by /qa on {YYYY-MM-DD}
+  // Found by /gl-qa on {YYYY-MM-DD}
   // Report: .gstack-lite/qa-reports/qa-report-{domain}-{date}.md
   ```
 
@@ -729,7 +729,7 @@ Write the report to both local and project-scoped locations:
 
 **Project-scoped:** Write test outcome artifact for cross-session context:
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
 ```
 Write to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-test-outcome-{datetime}.md`
 
@@ -755,7 +755,7 @@ Write to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-test-outcome-{datet
 If the repo has a `TODOS.md`:
 
 1. **New deferred bugs** -> add as TODOs with severity, category, and repro steps
-2. **Fixed bugs that were in TODOS.md** -> annotate with "Fixed by /qa on {branch}, {date}"
+2. **Fixed bugs that were in TODOS.md** -> annotate with "Fixed by /gl-qa on {branch}, {date}"
 
 ---
 

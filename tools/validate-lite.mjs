@@ -25,7 +25,29 @@ const expectedSkills = [
   'unfreeze',
 ].sort();
 
+const liteSkillCommands = [
+  'office-hours',
+  'plan-ceo-review',
+  'plan-eng-review',
+  'plan-design-review',
+  'design-consultation',
+  'design-shotgun',
+  'design-html',
+  'design-review',
+  'investigate',
+  'review',
+  'cso',
+  'browse',
+  'qa-only',
+  'qa',
+  'freeze',
+  'unfreeze',
+];
+
+const unprefixedLiteSkillCommand = new RegExp(`(^|[\\s(\\[{"'\`])/(?:${liteSkillCommands.join('|')})\\b`);
+
 const forbiddenPatterns = [
+  new RegExp(`${['gstack', 'lite'].join('-')}-`),
   /~\/\.claude\/skills\/gstack/,
   /\.claude\/skills\/gstack/,
   /~\/\.gstack(?!-lite)/,
@@ -46,6 +68,9 @@ const forbiddenPatterns = [
   /\bcodex\s+(?:exec|review)\b/i,
   /\bwhich codex\b/i,
   /\bCODEX_/,
+  /\bCLAUDE_SKILL_DIR\b/,
+  /\bcheck-freeze\b/,
+  unprefixedLiteSkillCommand,
 ];
 
 const scanRoots = [
@@ -100,8 +125,8 @@ async function validateSkills() {
     const rel = path.join('skills', skill, 'SKILL.md');
     const text = await readFile(path.join(repoRoot, rel), 'utf8');
     const { name, desc } = parseFrontmatter(text, rel);
-    if (name !== `gstack-lite-${skill}`) {
-      throw new Error(`${rel}: expected name gstack-lite-${skill}, got ${name}`);
+    if (name !== `gl-${skill}`) {
+      throw new Error(`${rel}: expected name gl-${skill}, got ${name}`);
     }
     if (!desc) {
       throw new Error(`${rel}: empty description`);

@@ -14,7 +14,7 @@ Usage:
   ./uninstall --all
   ./uninstall --all --state
 
-Removes only gstack-lite-* skill symlinks from selected host skill directories.
+Removes only gl-* skill symlinks from selected host skill directories.
 Use --state to also remove $HOME/.gstack-lite.
 USAGE
 }
@@ -76,7 +76,7 @@ uninstall_host() {
   [ -d "$skills_dir" ] || { echo "No skill directory for $host: $skills_dir"; return 0; }
 
   local removed=0
-  for target in "$skills_dir"/gstack-lite-*; do
+  for target in "$skills_dir"/gl-*; do
     [ -e "$target" ] || [ -L "$target" ] || continue
     if [ -L "$target" ]; then
       rm -f "$target"

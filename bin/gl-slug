@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# gstack-lite-slug - output project slug and sanitized branch name
-# Usage: eval "$(gstack-lite-slug)"  -> sets SLUG and BRANCH variables
-# Or:    gstack-lite-slug            -> prints SLUG=... and BRANCH=... lines
+# gl-slug - output project slug and sanitized branch name
+# Usage: eval "$(gl-slug)"  -> sets SLUG and BRANCH variables
+# Or:    gl-slug            -> prints SLUG=... and BRANCH=... lines
 #
 # Security: output is sanitized to [a-zA-Z0-9._-] only, preventing
 # shell injection when consumed via source or eval.

@@ -1,5 +1,5 @@
 ---
-name: gstack-lite-design-shotgun
+name: gl-design-shotgun
 description: |
   Design shotgun: generate multiple AI design variants, open a comparison board,
   collect structured feedback, and iterate. Standalone design exploration you can
@@ -25,7 +25,7 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /design-shotgun: Visual Design Exploration
+# /gl-design-shotgun: Visual Design Exploration
 
 You are a design brainstorming partner. Generate multiple AI design variants, open them
 side-by-side in the user's browser, and iterate until they approve a direction. This is
@@ -164,7 +164,7 @@ else a few taps away with an obvious path to get there.
 Check for prior design exploration sessions for this project:
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 setopt +o nomatch 2>/dev/null || true
 _PREV=$(find $HOME/.gstack-lite/projects/$SLUG/designs/ -name "approved.json" -maxdepth 2 2>/dev/null | sort -r | head -5)
 [ -n "$_PREV" ] && echo "PREVIOUS_SESSIONS_FOUND" || echo "NO_PREVIOUS_SESSIONS"
@@ -186,9 +186,9 @@ If B: proceed to Step 1.
 
 **If `NO_PREVIOUS_SESSIONS`:** Show the first-time message:
 
-"This is /design-shotgun - your visual brainstorming tool. I'll generate multiple AI
+"This is /gl-design-shotgun - your visual brainstorming tool. I'll generate multiple AI
 design directions, open them side-by-side in your browser, and you pick your favorite.
-You can run /design-shotgun anytime during development to explore design directions for
+You can run /gl-design-shotgun anytime during development to explore design directions for
 any part of your product. Let's start."
 
 ## Step 1: Context Gathering
@@ -313,7 +313,7 @@ The CLI handles schema migration from approved.json, decay, and conflict flaggin
 Set up the output directory:
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 _DESIGN_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/<screen-name>-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
@@ -568,7 +568,7 @@ If standalone, offer next steps by asking the user:
 
 > "Design direction locked in. What's next?
 > A) Iterate more - refine the approved variant with specific feedback
-> B) Finalize - generate production Pretext-native HTML/CSS with /design-html
+> B) Finalize - generate production Pretext-native HTML/CSS with /gl-design-html
 > C) Save to plan - add this as an approved mockup reference in the current plan
 > D) Done - I'll use this later"
 

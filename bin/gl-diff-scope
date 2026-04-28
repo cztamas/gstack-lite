@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# gstack-lite-diff-scope - categorize what changed in the diff against a base branch
-# Usage: source <(gstack-lite-diff-scope main)  -> sets SCOPE_FRONTEND=true SCOPE_BACKEND=false ...
-# Or:    gstack-lite-diff-scope main           -> prints SCOPE_*=... lines
+# gl-diff-scope - categorize what changed in the diff against a base branch
+# Usage: source <(gl-diff-scope main)  -> sets SCOPE_FRONTEND=true SCOPE_BACKEND=false ...
+# Or:    gl-diff-scope main           -> prints SCOPE_*=... lines
 set -euo pipefail
 
 BASE="${1:-main}"

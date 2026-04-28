@@ -1,10 +1,10 @@
 ---
-name: gstack-lite-design-review
+name: gl-design-review
 description: |
   Designer's eye QA: finds visual inconsistency, spacing issues, hierarchy problems,
   AI slop patterns, and slow interactions - then fixes them. Iteratively fixes issues
   in source code, committing each fix atomically and re-verifying with before/after
-  screenshots. For plan-mode design review (before implementation), use /plan-design-review.
+  screenshots. For plan-mode design review (before implementation), use /gl-plan-design-review.
   Use when asked to "audit the design", "visual QA", "check if it looks good", or "design polish".
   Proactively suggest when the user mentions visual inconsistencies or
   wants to polish the look of a live site. (gstack-lite)
@@ -26,7 +26,7 @@ Lite runtime paths:
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 
-# /design-review: Design Audit -> Fix -> Verify
+# /gl-design-review: Design Audit -> Fix -> Verify
 
 You are a senior product designer AND a frontend engineer. Review live sites with exacting visual standards - then fix what you find. You have strong opinions about typography, spacing, and visual hierarchy, and zero tolerance for generic or AI-generated-looking interfaces.
 
@@ -63,7 +63,7 @@ git status --porcelain
 
 If the output is non-empty (working tree is dirty), **STOP** and ask the user:
 
-"Your working tree has uncommitted changes. /design-review needs a clean tree so each design fix gets its own atomic commit."
+"Your working tree has uncommitted changes. /gl-design-review needs a clean tree so each design fix gets its own atomic commit."
 
 - A) Commit my changes - commit all current changes with a descriptive message, then start design review
 - B) Stash my changes - stash, run design review, pop the stash after
@@ -299,7 +299,7 @@ If `DESIGN_NOT_AVAILABLE`: skip mockup generation - the fix loop works without i
 **Create output directories:**
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 REPORT_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/design-audit-$(date +%Y%m%d)"
 mkdir -p "$REPORT_DIR/screenshots"
 echo "REPORT_DIR: $REPORT_DIR"
@@ -702,7 +702,7 @@ Compare screenshots and observations across pages for:
 
 **Project-scoped:**
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
 ```
 Write to: `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-design-audit-{datetime}.md`
 
@@ -964,9 +964,9 @@ Design fixes are typically CSS-only. Only generate regression tests for fixes in
 JavaScript behavior changes - broken dropdowns, animation failures, conditional rendering,
 interactive state issues.
 
-For CSS-only fixes: skip entirely. CSS regressions are caught by re-running /design-review.
+For CSS-only fixes: skip entirely. CSS regressions are caught by re-running /gl-design-review.
 
-If the fix involved JS behavior: follow the same procedure as /qa Phase 8e.5 (study existing
+If the fix involved JS behavior: follow the same procedure as /gl-qa Phase 8e.5 (study existing
 test patterns, write a regression test encoding the exact bug condition, run it, commit if
 passes or defer if fails). Commit format: `test(design): regression test for FINDING-NNN`.
 
@@ -1009,7 +1009,7 @@ Write the report to `$REPORT_DIR` (already set up in the setup phase):
 
 **Also write a summary to the project index:**
 ```bash
-eval "$($HOME/.gstack-lite/bin/gstack-lite-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
 ```
 Write a one-line summary to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-design-audit-{datetime}.md` with a pointer to the full report in `$REPORT_DIR`.
 
@@ -1036,7 +1036,7 @@ Write a one-line summary to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-
 If the repo has a `TODOS.md`:
 
 1. **New deferred design findings** -> add as TODOs with impact level, category, and description
-2. **Fixed findings that were in TODOS.md** -> annotate with "Fixed by /design-review on {branch}, {date}"
+2. **Fixed findings that were in TODOS.md** -> annotate with "Fixed by /gl-design-review on {branch}, {date}"
 
 ---
 
