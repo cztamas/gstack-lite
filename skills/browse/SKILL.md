@@ -17,11 +17,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser CLI, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # browse: QA Testing & Visual Checks
 
@@ -34,12 +35,12 @@ This lite port intentionally does not include cookie import from installed brows
 Run this before any browse command:
 
 ```bash
-_STATE="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
+_RUNTIME="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
 B=""
-if [ -x "$_STATE/browse/bin/find-browse" ]; then
-  B="$("$_STATE/browse/bin/find-browse" 2>/dev/null || true)"
+if [ -x "$_RUNTIME/browse/bin/find-browse" ]; then
+  B="$("$_RUNTIME/browse/bin/find-browse" 2>/dev/null || true)"
 fi
-[ -z "$B" ] && [ -x "$_STATE/browse/dist/browse" ] && B="$_STATE/browse/dist/browse"
+[ -z "$B" ] && [ -x "$_RUNTIME/browse/dist/browse" ] && B="$_RUNTIME/browse/dist/browse"
 [ -z "$B" ] && command -v gstack-browser >/dev/null 2>&1 && B="$(command -v gstack-browser)"
 [ -z "$B" ] && command -v gstack-browse >/dev/null 2>&1 && B="$(command -v gstack-browse)"
 if [ -n "$B" ] && [ -x "$B" ]; then
@@ -54,7 +55,7 @@ If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrad
 If the CLI exists but Playwright is missing, install it:
 
 ```bash
-cd "$_STATE/browse"
+cd "$_RUNTIME/browse"
 npm install
 npx playwright install chromium
 ```

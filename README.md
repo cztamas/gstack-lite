@@ -22,6 +22,8 @@ Other hosts:
 
 The installer creates namespaced skill symlinks such as `gl-review` and `gl-qa`, then links shared runtime assets into `$HOME/.gstack-lite` and skill mirrors into `$HOME/.gstack-lite/skills`.
 
+Generated plans, browser state, QA reports, design artifacts, and other writable state default to the active repository's `.gstack-lite/` directory. Add `.gstack-lite/` to that repository's `.gitignore` for local-only state, or commit selected files when the state should be shared with the repo.
+
 ## Uninstall
 
 ```bash
@@ -30,7 +32,7 @@ The installer creates namespaced skill symlinks such as `gl-review` and `gl-qa`,
 ./uninstall --all --state
 ```
 
-`--state` also removes `$HOME/.gstack-lite`. Playwright browser caches and project files are left alone.
+`--state` also removes the installed runtime directory at `$HOME/.gstack-lite`. Repo-local `.gstack-lite/` project state is left alone.
 
 ## Skills
 
@@ -58,6 +60,8 @@ The browser and design runtimes are optional progressive enhancements:
 - Browser CLI: `$HOME/.gstack-lite/browse/dist/browse`
 - Design: `$HOME/.gstack-lite/design/dist/design`
 - Pretext vendor file: `$HOME/.gstack-lite/design-html/vendor/pretext.js`
+
+Writable project state uses `<repo>/.gstack-lite/` by default. Override that with `GSTACK_LITE_STATE_DIR=/absolute/path` if a repository needs a different state location.
 
 The browser CLI is a Node + Playwright package in `browse/`. For a local checkout:
 

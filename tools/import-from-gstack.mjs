@@ -42,11 +42,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: \`$HOME/.gstack-lite/\`
+- State and generated artifacts: active repo \`.gstack-lite/\` (resolved as \`$GSTACK_LITE_STATE_DIR\`; override with \`GSTACK_LITE_STATE_DIR\`)
 - Browser binary, when installed: \`$HOME/.gstack-lite/browse/dist/browse\`
 - Design binary, when installed: \`$HOME/.gstack-lite/design/dist/design\`
+- Before reading or writing project state, run \`eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"\` to populate \`$GSTACK_LITE_STATE_DIR\` and \`$BRANCH\`
 
 `;
 
@@ -69,7 +70,7 @@ const stripSectionHeadings = [
   /^### Codex structured review\b/,
 ];
 
-const forbiddenLine = /\b(gstack-(?:config|update-check|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)|codex\s+(?:exec|review)|which codex|CODEX_|CLAUDE_SKILL_DIR|GBrain|telemetry prompt|Remote telemetry|Local analytics|Session timeline|skill-usage\.jsonl|analytics\/skill-usage|builder-profile\.jsonl|check-freeze)\b/i;
+const forbiddenLine = /\b(gstack-(?:config|update-check|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)|codex\s+(?:exec|review)|which codex|CODEX_|CLAUDE_SKILL_DIR|GBrain|telemetry prompt|Remote telemetry|Local analytics|Session timeline|skill-usage\.jsonl|analytics\/skill-usage|spec-review\.jsonl|builder-profile\.jsonl|check-freeze)\b/i;
 
 const liteSkillCommands = [
   'office-hours',
@@ -181,7 +182,7 @@ const pathRewrites = [
   [/~\/\.gstack/g, '$HOME/.gstack-lite'],
   [/\$HOME\/\.gstack(?!-lite)/g, '$HOME/.gstack-lite'],
   [/\$\{GSTACK_LITE_HOME:-\$HOME\/\.gstack\}/g, '${GSTACK_LITE_HOME:-$HOME/.gstack-lite}'],
-  [/\$\{CLAUDE_PLUGIN_DATA:-\$HOME\/\.gstack\}/g, '${GSTACK_LITE_HOME:-$HOME/.gstack-lite}'],
+  [/\$\{CLAUDE_PLUGIN_DATA:-\$HOME\/\.gstack\}/g, '${GSTACK_LITE_STATE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.gstack-lite}'],
   [/\.gstack\//g, '.gstack-lite/'],
   [/\.gstack\/qa-reports/g, '.gstack-lite/qa-reports'],
   [/\.gstack\/security-reports/g, '.gstack-lite/security-reports'],
@@ -372,6 +373,37 @@ function removeForbiddenLines(markdown) {
   return kept.join('\n');
 }
 
+function rewriteProjectStatePaths(markdown) {
+  return markdown
+    .replace(/\$HOME\/\.gstack-lite\/projects/g, '$GSTACK_LITE_STATE_DIR')
+    .replace(/\$HOME\/\.gstack-lite\/analytics/g, '$GSTACK_LITE_STATE_DIR/analytics')
+    .replace(/\$HOME\/\.gstack-lite\/slug-cache/g, '$GSTACK_LITE_STATE_DIR/slug-cache')
+    .replace(/\$HOME\/\.gstack-lite\/freeze-dir\.txt/g, '$GSTACK_LITE_STATE_DIR/freeze-dir.txt')
+    .replace(/`docs\/designs\/`, `\/tmp\/`, or any project-local directory\./g, '`docs/designs/`, `/tmp/`, or any ad hoc output directory.')
+    .replace(/data, not project files\. They persist across branches, conversations, and workspaces\./g, 'repo-level state. They persist across branches and conversations; users can ignore `.gstack-lite/` or commit selected artifacts when they want shared state.')
+    .replace(/\(user config directory, not project files\)/g, '(repo-local state directory)')
+    .replace(/\(local, personal reference\)/g, "(repo-local state; ignore or commit at the project's discretion)");
+}
+
+function removeLiteAnalytics(markdown) {
+  return markdown
+    .replace(
+      /\n3\. Append metrics:\n```bash\n[\s\S]*?```\nReplace ITERATIONS, FOUND, FIXED, REMAINING, SCORE with actual values from the review\.\n/g,
+      '\n3. Do not append analytics or metrics files. Keep any useful review concerns in the document itself.\n',
+    )
+    .replace(
+      /\n2\. Log the selection to analytics:\n```bash\n[\s\S]*?```\n/g,
+      '\n2. Do not log resource selection analytics in gstack-lite.\n',
+    );
+}
+
+function clarifyRuntimeNames(markdown) {
+  return markdown
+    .replace(/_STATE="\$\{GSTACK_LITE_HOME:-\$HOME\/\.gstack-lite\}"/g, '_RUNTIME="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"')
+    .replace(/"\$_STATE\/browse/g, '"$_RUNTIME/browse')
+    .replace(/\$_STATE\/browse/g, '$_RUNTIME/browse');
+}
+
 function normalizeBody(markdown) {
   let out = toAscii(markdown);
 
@@ -384,6 +416,9 @@ function normalizeBody(markdown) {
   }
 
   out = prefixLiteSkillCommands(out);
+  out = rewriteProjectStatePaths(out);
+  out = removeLiteAnalytics(out);
+  out = clarifyRuntimeNames(out);
 
   out = stripSections(out);
   out = out.replace(
@@ -391,6 +426,9 @@ function normalizeBody(markdown) {
     'If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrade to host-native browser tools if available; otherwise continue with written QA/review and tell the user that `$HOME/.gstack-lite/browse/dist/browse` is missing.\n',
   );
   out = removeForbiddenLines(out);
+  out = rewriteProjectStatePaths(out);
+  out = removeLiteAnalytics(out);
+  out = clarifyRuntimeNames(out);
   out = out.replace(/\n{4,}/g, '\n\n\n');
   return toAscii(out.trimEnd()) + '\n';
 }
@@ -464,10 +502,33 @@ async function copyTextDirIfExists(from, to, transform = (value) => value) {
 
 async function importAssets() {
   await mkdir(path.join(repoRoot, 'bin'), { recursive: true });
-  const slug = (await readFile(path.join(sourceRoot, 'bin', 'gstack-slug'), 'utf8'))
-    .replaceAll('$HOME/.gstack', '$HOME/.gstack-lite')
-    .replaceAll('gstack-slug', 'gl-slug')
-    .replace('CACHE_DIR="$HOME/.gstack-lite/slug-cache"', 'STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"\nCACHE_DIR="$STATE_DIR/slug-cache"');
+  const slug = `#!/usr/bin/env bash
+# gl-slug - output repo-local state, project slug, and sanitized branch name
+# Usage: eval "$(gl-slug)"  -> sets SLUG and BRANCH variables
+# Or:    gl-slug            -> prints SLUG=... and BRANCH=... lines
+#
+# Security: output is sanitized to [a-zA-Z0-9._-] only, preventing
+# shell injection when consumed via source or eval.
+set -euo pipefail
+
+PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
+STATE_DIR="\${GSTACK_LITE_STATE_DIR:-$PROJECT_DIR/.gstack-lite}"
+
+REMOTE_URL=$(git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null) || REMOTE_URL=""
+if [[ -n "$REMOTE_URL" ]]; then
+  RAW_SLUG=$(printf '%s' "$REMOTE_URL" | sed 's|.*[:/]\\([^/]*/[^/]*\\)\\.git$|\\1|;s|.*[:/]\\([^/]*/[^/]*\\)$|\\1|' | tr '/' '-')
+  SLUG=$(printf '%s' "$RAW_SLUG" | tr -cd 'a-zA-Z0-9._-')
+fi
+SLUG="\${SLUG:-$(basename "$PROJECT_DIR" | tr -cd 'a-zA-Z0-9._-')}"
+
+RAW_BRANCH=$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null) || RAW_BRANCH=""
+BRANCH=$(printf '%s' "\${RAW_BRANCH:-}" | tr '/' '-' | tr -cd 'a-zA-Z0-9._-')
+BRANCH="\${BRANCH:-unknown}"
+printf 'GSTACK_LITE_PROJECT_DIR=%q\\n' "$PROJECT_DIR"
+printf 'GSTACK_LITE_STATE_DIR=%q\\n' "$STATE_DIR"
+echo "SLUG=$SLUG"
+echo "BRANCH=$BRANCH"
+`;
   await writeFile(path.join(repoRoot, 'bin', 'gl-slug'), toAscii(slug), { mode: 0o755 });
 
   const diffScope = (await readFile(path.join(sourceRoot, 'bin', 'gstack-diff-scope'), 'utf8'))
@@ -480,20 +541,20 @@ async function importAssets() {
   await copyTextIfExists(
     path.join(sourceRoot, 'review', 'design-checklist.md'),
     path.join(repoRoot, 'review', 'design-checklist.md'),
-    (text) => toAscii(text
+    (text) => rewriteProjectStatePaths(toAscii(text
       .replaceAll('~/.claude/skills/gstack/bin/gstack-diff-scope', '$HOME/.gstack-lite/bin/gl-diff-scope')
       .replaceAll('~/.gstack', '$HOME/.gstack-lite')
       .replace(/\$HOME\/\.gstack(?!-lite)/g, '$HOME/.gstack-lite')
-      .replaceAll('.gstack/', '.gstack-lite/')),
+      .replaceAll('.gstack/', '.gstack-lite/'))),
   );
   await copyTextIfExists(
     path.join(sourceRoot, 'review', 'greptile-triage.md'),
     path.join(repoRoot, 'review', 'greptile-triage.md'),
-    (text) => toAscii(text
+    (text) => rewriteProjectStatePaths(toAscii(text
       .replaceAll('~/.claude/skills/gstack/browse/bin/remote-slug', '$HOME/.gstack-lite/browse/bin/remote-slug')
       .replaceAll('~/.gstack', '$HOME/.gstack-lite')
       .replace(/\$HOME\/\.gstack(?!-lite)/g, '$HOME/.gstack-lite')
-      .replaceAll('.gstack/', '.gstack-lite/')),
+      .replaceAll('.gstack/', '.gstack-lite/'))),
   );
   await copyTextDirIfExists(path.join(sourceRoot, 'review', 'specialists'), path.join(repoRoot, 'review', 'specialists'), toAscii);
   await copyTextIfExists(path.join(sourceRoot, 'qa', 'templates', 'qa-report-template.md'), path.join(repoRoot, 'qa', 'templates', 'qa-report-template.md'), toAscii);
@@ -503,7 +564,9 @@ async function importAssets() {
   await copyTextIfExists(
     path.join(sourceRoot, 'browse', 'bin', 'remote-slug'),
     path.join(repoRoot, 'browse', 'bin', 'remote-slug'),
-    (text) => toAscii(text.replaceAll('~/.gstack', '$HOME/.gstack-lite')),
+    (text) => toAscii(text
+      .replaceAll('~/.gstack', '$HOME/.gstack-lite')
+      .replace('Used by SKILL.md files to derive project-specific paths in $HOME/.gstack-lite/projects/.', 'Kept for compatibility with older skill text. New repo-local state does not need a slugged project subdirectory.')),
   );
   await chmod(path.join(repoRoot, 'browse', 'bin', 'remote-slug'), 0o755);
   await chmod(path.join(repoRoot, 'browse', 'bin', 'find-browse'), 0o755);

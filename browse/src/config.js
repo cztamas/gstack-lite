@@ -1,6 +1,4 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -22,19 +20,6 @@ export function getGitRoot(cwd = process.cwd()) {
   }
 }
 
-function safeSlug(input) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'workspace';
-}
-
-function workspaceSlug(projectDir) {
-  const hash = crypto.createHash('sha1').update(projectDir).digest('hex').slice(0, 10);
-  return `${safeSlug(path.basename(projectDir))}-${hash}`;
-}
-
 export function resolveConfig(env = process.env, cwd = process.cwd()) {
   if (env.BROWSE_STATE_FILE) {
     const stateFile = path.resolve(env.BROWSE_STATE_FILE);
@@ -44,10 +29,8 @@ export function resolveConfig(env = process.env, cwd = process.cwd()) {
   }
 
   const projectDir = getGitRoot(cwd) || cwd;
-  const home = env.GSTACK_BROWSER_HOME
-    || env.GSTACK_LITE_HOME
-    || path.join(os.homedir(), '.gstack-lite');
-  const stateDir = path.join(home, 'browser', 'projects', workspaceSlug(projectDir));
+  const stateRoot = env.GSTACK_LITE_STATE_DIR || path.join(projectDir, '.gstack-lite');
+  const stateDir = path.join(env.GSTACK_BROWSER_HOME || stateRoot, 'browser');
   const stateFile = path.join(stateDir, 'browse.json');
   return pathsFor(projectDir, stateDir, stateFile);
 }

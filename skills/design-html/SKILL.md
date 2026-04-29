@@ -22,11 +22,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # /gl-design-html: Pretext-Native HTML Engine
 
@@ -74,9 +75,9 @@ Commands:
 - `$D iterate --session /path/session.json --feedback "..." --output /path.png` - iterate
 
 **CRITICAL PATH RULE:** All design artifacts (mockups, comparison boards, approved.json)
-MUST be saved to `$HOME/.gstack-lite/projects/$SLUG/designs/`, NEVER to `.context/`,
-`docs/designs/`, `/tmp/`, or any project-local directory. Design artifacts are USER
-data, not project files. They persist across branches, conversations, and workspaces.
+MUST be saved to `$GSTACK_LITE_STATE_DIR/designs/`, NEVER to `.context/`,
+`docs/designs/`, `/tmp/`, or any ad hoc output directory. Design artifacts are USER
+repo-level state. They persist across branches and conversations; users can ignore `.gstack-lite/` or commit selected artifacts when they want shared state.
 
 ## UX Principles: How Users Actually Behave
 
@@ -191,25 +192,25 @@ Detect what design context exists for this project. Run all four checks:
 
 ```bash
 setopt +o nomatch 2>/dev/null || true
-_CEO=$(ls -t $HOME/.gstack-lite/projects/$SLUG/ceo-plans/*.md 2>/dev/null | head -1)
+_CEO=$(ls -t $GSTACK_LITE_STATE_DIR/ceo-plans/*.md 2>/dev/null | head -1)
 [ -n "$_CEO" ] && echo "CEO_PLAN: $_CEO" || echo "NO_CEO_PLAN"
 ```
 
 ```bash
 setopt +o nomatch 2>/dev/null || true
-_APPROVED=$(ls -t $HOME/.gstack-lite/projects/$SLUG/designs/*/approved.json 2>/dev/null | head -1)
+_APPROVED=$(ls -t $GSTACK_LITE_STATE_DIR/designs/*/approved.json 2>/dev/null | head -1)
 [ -n "$_APPROVED" ] && echo "APPROVED: $_APPROVED" || echo "NO_APPROVED"
 ```
 
 ```bash
 setopt +o nomatch 2>/dev/null || true
-_VARIANTS=$(ls -t $HOME/.gstack-lite/projects/$SLUG/designs/*/variant-*.png 2>/dev/null | head -1)
+_VARIANTS=$(ls -t $GSTACK_LITE_STATE_DIR/designs/*/variant-*.png 2>/dev/null | head -1)
 [ -n "$_VARIANTS" ] && echo "VARIANTS: $_VARIANTS" || echo "NO_VARIANTS"
 ```
 
 ```bash
 setopt +o nomatch 2>/dev/null || true
-_FINALIZED=$(ls -t $HOME/.gstack-lite/projects/$SLUG/designs/*/finalized.html 2>/dev/null | head -1)
+_FINALIZED=$(ls -t $GSTACK_LITE_STATE_DIR/designs/*/finalized.html 2>/dev/null | head -1)
 [ -n "$_FINALIZED" ] && echo "FINALIZED: $_FINALIZED" || echo "NO_FINALIZED"
 [ -f DESIGN.md ] && echo "DESIGN_MD: exists" || echo "NO_DESIGN_MD"
 ```
@@ -384,10 +385,10 @@ Run the detected install command. Then use standard imports in the component.
 ### HTML Generation
 
 Write a single file using the Write tool. Save to:
-`$HOME/.gstack-lite/projects/$SLUG/designs/<screen-name>-YYYYMMDD/finalized.html`
+`$GSTACK_LITE_STATE_DIR/designs/<screen-name>-YYYYMMDD/finalized.html`
 
 For framework output, save to:
-`$HOME/.gstack-lite/projects/$SLUG/designs/<screen-name>-YYYYMMDD/finalized.[tsx|svelte|vue]`
+`$GSTACK_LITE_STATE_DIR/designs/<screen-name>-YYYYMMDD/finalized.[tsx|svelte|vue]`
 
 **Always include in vanilla HTML:**
 - Pretext source (inlined or CDN, see above)

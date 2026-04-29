@@ -63,4 +63,6 @@ The lite skill resolver checks, in order:
 3. `$PROJECT/.gstack-lite/browse/dist/browse`
 4. `$GSTACK_LITE_HOME/browse/dist/browse`
 
+Browser session state defaults to `$PROJECT/.gstack-lite/browser/`. Override it with `GSTACK_LITE_STATE_DIR=/absolute/path` for all lite state, or `GSTACK_BROWSER_HOME=/absolute/path` for browser state only.
+
 This first Node port focuses on headless local browser QA. It intentionally skips cookie import from installed browsers, Chrome side panel/extension workflows, headed handoff, and ngrok/pairing.

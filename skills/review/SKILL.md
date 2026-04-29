@@ -17,11 +17,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # Pre-Landing PR Review
 
@@ -80,13 +81,11 @@ Before reviewing code quality, check: **did they build what was requested - noth
 
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 BRANCH=$(git branch --show-current 2>/dev/null | tr '/' '-')
 REPO=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-# Compute project slug for $HOME/.gstack-lite/projects/ lookup
-_PLAN_SLUG=$(git remote get-url origin 2>/dev/null | sed 's|.*[:/]\([^/]*/[^/]*\)\.git$|\1|;s|.*[:/]\([^/]*/[^/]*\)$|\1|' | tr '/' '-' | tr -cd 'a-zA-Z0-9._-') || true
-_PLAN_SLUG="${_PLAN_SLUG:-$(basename "$PWD" | tr -cd 'a-zA-Z0-9._-')}"
 # Search common plan file locations (project designs first, then personal/local)
-for PLAN_DIR in "$HOME/.gstack-lite/projects/$_PLAN_SLUG" "$HOME/.claude/plans" "$HOME/.codex/plans" ".gstack-lite/plans"; do
+for PLAN_DIR in "$GSTACK_LITE_STATE_DIR" "$HOME/.claude/plans" "$HOME/.codex/plans" ".gstack-lite/plans"; do
   [ -d "$PLAN_DIR" ] || continue
   PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$BRANCH" 2>/dev/null | head -1)
   [ -z "$PLAN" ] && PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$REPO" 2>/dev/null | head -1)

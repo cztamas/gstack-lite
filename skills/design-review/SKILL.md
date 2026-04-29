@@ -20,11 +20,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # /gl-design-review: Design Audit -> Fix -> Verify
 
@@ -288,9 +289,9 @@ Commands:
 - `$D iterate --session /path/session.json --feedback "..." --output /path.png` - iterate
 
 **CRITICAL PATH RULE:** All design artifacts (mockups, comparison boards, approved.json)
-MUST be saved to `$HOME/.gstack-lite/projects/$SLUG/designs/`, NEVER to `.context/`,
-`docs/designs/`, `/tmp/`, or any project-local directory. Design artifacts are USER
-data, not project files. They persist across branches, conversations, and workspaces.
+MUST be saved to `$GSTACK_LITE_STATE_DIR/designs/`, NEVER to `.context/`,
+`docs/designs/`, `/tmp/`, or any ad hoc output directory. Design artifacts are USER
+repo-level state. They persist across branches and conversations; users can ignore `.gstack-lite/` or commit selected artifacts when they want shared state.
 
 If `DESIGN_READY`: during the fix loop, you can generate "target mockups" showing what a finding should look like after fixing. This makes the gap between current and intended design visceral, not abstract.
 
@@ -300,7 +301,7 @@ If `DESIGN_NOT_AVAILABLE`: skip mockup generation - the fix loop works without i
 
 ```bash
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-REPORT_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/design-audit-$(date +%Y%m%d)"
+REPORT_DIR="$GSTACK_LITE_STATE_DIR/designs/design-audit-$(date +%Y%m%d)"
 mkdir -p "$REPORT_DIR/screenshots"
 echo "REPORT_DIR: $REPORT_DIR"
 ```
@@ -702,9 +703,9 @@ Compare screenshots and observations across pages for:
 
 **Project-scoped:**
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
 ```
-Write to: `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-design-audit-{datetime}.md`
+Write to: `$GSTACK_LITE_STATE_DIR/{user}-{branch}-design-audit-{datetime}.md`
 
 **Baseline:** Write `design-baseline.json` for regression mode:
 ```json
@@ -865,7 +866,7 @@ Record baseline design score and AI slop score at end of Phase 6.
 ## Output Structure
 
 ```
-$HOME/.gstack-lite/projects/$SLUG/designs/design-audit-{YYYYMMDD}/
+$GSTACK_LITE_STATE_DIR/designs/design-audit-{YYYYMMDD}/
 +-- design-audit-{domain}.md                  # Structured report
 +-- screenshots/
 |   +-- first-impression.png                  # Phase 1
@@ -1009,9 +1010,9 @@ Write the report to `$REPORT_DIR` (already set up in the setup phase):
 
 **Also write a summary to the project index:**
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
 ```
-Write a one-line summary to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-design-audit-{datetime}.md` with a pointer to the full report in `$REPORT_DIR`.
+Write a one-line summary to `$GSTACK_LITE_STATE_DIR/{user}-{branch}-design-audit-{datetime}.md` with a pointer to the full report in `$REPORT_DIR`.
 
 **Per-finding additions** (beyond standard design audit report):
 - Fix Status: verified / best-effort / reverted / deferred

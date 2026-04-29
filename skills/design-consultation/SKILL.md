@@ -20,11 +20,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # /gl-design-consultation: Your Design System, Built Together
 
@@ -58,7 +59,7 @@ Look for office-hours output:
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-ls $HOME/.gstack-lite/projects/$SLUG/*office-hours* 2>/dev/null | head -5
+ls $GSTACK_LITE_STATE_DIR/*office-hours* 2>/dev/null | head -5
 ls .context/*office-hours* .context/attachments/*office-hours* 2>/dev/null | head -5
 ```
 
@@ -127,9 +128,9 @@ Commands:
 - `$D iterate --session /path/session.json --feedback "..." --output /path.png` - iterate
 
 **CRITICAL PATH RULE:** All design artifacts (mockups, comparison boards, approved.json)
-MUST be saved to `$HOME/.gstack-lite/projects/$SLUG/designs/`, NEVER to `.context/`,
-`docs/designs/`, `/tmp/`, or any project-local directory. Design artifacts are USER
-data, not project files. They persist across branches, conversations, and workspaces.
+MUST be saved to `$GSTACK_LITE_STATE_DIR/designs/`, NEVER to `.context/`,
+`docs/designs/`, `/tmp/`, or any ad hoc output directory. Design artifacts are USER
+repo-level state. They persist across branches and conversations; users can ignore `.gstack-lite/` or commit selected artifacts when they want shared state.
 
 If `DESIGN_READY`: Phase 5 will generate AI mockups of your proposed design system applied to real screens, instead of just an HTML preview page. Much more powerful - the user sees what their product could actually look like.
 
@@ -164,7 +165,7 @@ everything is memorable for nothing.
 Read the persistent taste profile if it exists:
 
 ```bash
-_TASTE_PROFILE=$HOME/.gstack-lite/projects/$SLUG/taste-profile.json
+_TASTE_PROFILE=$GSTACK_LITE_STATE_DIR/taste-profile.json
 if [ -f "$_TASTE_PROFILE" ]; then
   # Schema v1: { dimensions: { fonts, colors, layouts, aesthetics }, sessions: [] }
   # Each dimension has approved[] and rejected[] entries with
@@ -379,7 +380,7 @@ Generate AI-rendered mockups showing the proposed design system applied to reali
 
 ```bash
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-_DESIGN_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/design-system-$(date +%Y%m%d)"
+_DESIGN_DIR="$GSTACK_LITE_STATE_DIR/designs/design-system-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
 ```

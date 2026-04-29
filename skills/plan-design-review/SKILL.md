@@ -20,11 +20,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # /gl-plan-design-review: Designer's Eye Plan Review
 
@@ -256,9 +257,9 @@ Commands:
 - `$D iterate --session /path/session.json --feedback "..." --output /path.png` - iterate
 
 **CRITICAL PATH RULE:** All design artifacts (mockups, comparison boards, approved.json)
-MUST be saved to `$HOME/.gstack-lite/projects/$SLUG/designs/`, NEVER to `.context/`,
-`docs/designs/`, `/tmp/`, or any project-local directory. Design artifacts are USER
-data, not project files. They persist across branches, conversations, and workspaces.
+MUST be saved to `$GSTACK_LITE_STATE_DIR/designs/`, NEVER to `.context/`,
+`docs/designs/`, `/tmp/`, or any ad hoc output directory. Design artifacts are USER
+repo-level state. They persist across branches and conversations; users can ignore `.gstack-lite/` or commit selected artifacts when they want shared state.
 
 ## Step 0: Design Scope Assessment
 
@@ -297,13 +298,13 @@ The ONLY time you skip mockups is when:
 If the user explicitly says "skip mockups" or "text only", respect that. Otherwise, generate.
 
 **PLAN MODE EXCEPTION - ALWAYS RUN:** These commands write design artifacts to
-`$HOME/.gstack-lite/projects/$SLUG/designs/` (user config directory, not project files).
+`$GSTACK_LITE_STATE_DIR/designs/` (repo-local state directory).
 Mockups are design artifacts that inform the plan, not code changes. The gstack
 designer outputs PNGs and HTML comparison boards for human review during the
 planning phase. Generating mockups during planning is the whole point.
 
 Allowed commands under this exception:
-- `mkdir -p $HOME/.gstack-lite/projects/$SLUG/designs/...`
+- `mkdir -p $GSTACK_LITE_STATE_DIR/designs/...`
 - `$D generate`, `$D variants`, `$D compare`, `$D iterate`, `$D evolve`, `$D check`
 - `open` (fallback for viewing boards when `$B` is not available)
 
@@ -311,7 +312,7 @@ First, set up the output directory. Name it after the screen/feature being desig
 
 ```bash
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-_DESIGN_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/<screen-name>-$(date +%Y%m%d)"
+_DESIGN_DIR="$GSTACK_LITE_STATE_DIR/designs/<screen-name>-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
 ```
@@ -700,7 +701,7 @@ If visual mockups were generated during this review, add to the plan file:
 
 | Screen/Section | Mockup Path | Direction | Notes |
 |----------------|-------------|-----------|-------|
-| [screen name]  | $HOME/.gstack-lite/projects/$SLUG/designs/[folder]/[filename].png | [brief description] | [constraints from review] |
+| [screen name]  | $GSTACK_LITE_STATE_DIR/designs/[folder]/[filename].png | [brief description] | [constraints from review] |
 ```
 
 Include the full path to each approved mockup (the variant the user chose), a one-line description of the direction, and any constraints. The implementer reads this to know exactly which visual to build from. These persist across conversations and workspaces. If no mockups were generated, omit this section.

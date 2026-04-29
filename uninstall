@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd -P)"
-STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
+RUNTIME_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
 HOSTS=()
-REMOVE_STATE=0
+REMOVE_RUNTIME=0
 
 usage() {
   cat <<'USAGE'
@@ -16,7 +16,8 @@ Usage:
   ./uninstall --all --state
 
 Removes only gl-* skill symlinks from selected host skill directories.
-Use --state to also remove $HOME/.gstack-lite.
+Use --state to also remove the installed runtime directory at $HOME/.gstack-lite.
+Repo-local .gstack-lite project state is left alone.
 USAGE
 }
 
@@ -43,7 +44,7 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --state)
-      REMOVE_STATE=1
+      REMOVE_RUNTIME=1
       shift
       ;;
     -h|--help)
@@ -104,14 +105,14 @@ for host in "${HOSTS[@]}"; do
   uninstall_host "$host"
 done
 
-if [ "$REMOVE_STATE" -eq 1 ]; then
-  case "$STATE_DIR" in
+if [ "$REMOVE_RUNTIME" -eq 1 ]; then
+  case "$RUNTIME_DIR" in
     "$HOME/.gstack-lite"|"$HOME/.gstack-lite"/*)
-      rm -rf "$STATE_DIR"
-      echo "removed state: $STATE_DIR"
+      rm -rf "$RUNTIME_DIR"
+      echo "removed runtime: $RUNTIME_DIR"
       ;;
     *)
-      echo "refusing to remove nonstandard state path: $STATE_DIR" >&2
+      echo "refusing to remove nonstandard runtime path: $RUNTIME_DIR" >&2
       exit 1
       ;;
   esac

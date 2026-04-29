@@ -20,11 +20,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # Plan Review Mode
 
@@ -73,10 +74,9 @@ When evaluating architecture, think "boring by default." When reviewing tests, t
 ### Design Doc Check
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-SLUG=$($HOME/.gstack-lite/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-' || echo 'no-branch')
-DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 ```
 If a design doc exists, read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design - check the prior version for context on what changed and why.
@@ -128,10 +128,9 @@ Execute every other section at full depth. When the loaded skill's instructions 
 After /gl-office-hours completes, re-run the design doc check:
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-SLUG=$($HOME/.gstack-lite/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-' || echo 'no-branch')
-DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 ```
 
@@ -370,12 +369,12 @@ The plan should be complete enough that when implementation begins, every test i
 After producing the coverage diagram, write a test plan artifact to the project directory so `/gl-qa` and `/gl-qa-only` can consume it as primary test input:
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
 USER=$(whoami)
 DATETIME=$(date +%Y%m%d-%H%M%S)
 ```
 
-Write to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-eng-review-test-plan-{datetime}.md`:
+Write to `$GSTACK_LITE_STATE_DIR/{user}-{branch}-eng-review-test-plan-{datetime}.md`:
 
 ```markdown
 # Test Plan

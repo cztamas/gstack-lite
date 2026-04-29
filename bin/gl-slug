@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gl-slug - output project slug and sanitized branch name
+# gl-slug - output repo-local state, project slug, and sanitized branch name
 # Usage: eval "$(gl-slug)"  -> sets SLUG and BRANCH variables
 # Or:    gl-slug            -> prints SLUG=... and BRANCH=... lines
 #
@@ -7,42 +7,20 @@
 # shell injection when consumed via source or eval.
 set -euo pipefail
 
-STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
-CACHE_DIR="$STATE_DIR/slug-cache"
-PROJECT_DIR="$(pwd)"
-# Encode absolute path as cache key: /Users/j/foo -> _Users_j_foo
-CACHE_KEY=$(printf '%s' "$PROJECT_DIR" | tr '/' '_')
-CACHE_FILE="${CACHE_DIR}/${CACHE_KEY}"
+PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
+STATE_DIR="${GSTACK_LITE_STATE_DIR:-$PROJECT_DIR/.gstack-lite}"
 
-# 1. Try cached slug first (guarantees consistency across sessions)
-if [[ -f "$CACHE_FILE" ]]; then
-  SLUG=$(cat "$CACHE_FILE")
+REMOTE_URL=$(git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null) || REMOTE_URL=""
+if [[ -n "$REMOTE_URL" ]]; then
+  RAW_SLUG=$(printf '%s' "$REMOTE_URL" | sed 's|.*[:/]\([^/]*/[^/]*\)\.git$|\1|;s|.*[:/]\([^/]*/[^/]*\)$|\1|' | tr '/' '-')
+  SLUG=$(printf '%s' "$RAW_SLUG" | tr -cd 'a-zA-Z0-9._-')
 fi
+SLUG="${SLUG:-$(basename "$PROJECT_DIR" | tr -cd 'a-zA-Z0-9._-')}"
 
-# 2. If no cache, compute from git remote (separated from pipeline to avoid
-#    pipefail swallowing the error and producing an empty slug)
-if [[ -z "${SLUG:-}" ]]; then
-  REMOTE_URL=$(git remote get-url origin 2>/dev/null) || REMOTE_URL=""
-  if [[ -n "$REMOTE_URL" ]]; then
-    RAW_SLUG=$(printf '%s' "$REMOTE_URL" | sed 's|.*[:/]\([^/]*/[^/]*\)\.git$|\1|;s|.*[:/]\([^/]*/[^/]*\)$|\1|' | tr '/' '-')
-    SLUG=$(printf '%s' "$RAW_SLUG" | tr -cd 'a-zA-Z0-9._-')
-  fi
-fi
-
-# 3. Fallback to basename only when there's truly no git remote configured
-SLUG="${SLUG:-$(basename "$PWD" | tr -cd 'a-zA-Z0-9._-')}"
-
-# 4. Cache the slug for future sessions (atomic write, fail silently)
-if [[ -n "$SLUG" ]]; then
-  mkdir -p "$CACHE_DIR" 2>/dev/null || true
-  CACHE_TMP=$(mktemp "$CACHE_DIR/.slug-XXXXXX" 2>/dev/null) || CACHE_TMP=""
-  if [[ -n "$CACHE_TMP" ]]; then
-    printf '%s' "$SLUG" > "$CACHE_TMP" && mv "$CACHE_TMP" "$CACHE_FILE" 2>/dev/null || rm -f "$CACHE_TMP" 2>/dev/null
-  fi
-fi
-
-RAW_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || RAW_BRANCH=""
-BRANCH=$(printf '%s' "${RAW_BRANCH:-}" | tr -cd 'a-zA-Z0-9._-')
+RAW_BRANCH=$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null) || RAW_BRANCH=""
+BRANCH=$(printf '%s' "${RAW_BRANCH:-}" | tr '/' '-' | tr -cd 'a-zA-Z0-9._-')
 BRANCH="${BRANCH:-unknown}"
+printf 'GSTACK_LITE_PROJECT_DIR=%q\n' "$PROJECT_DIR"
+printf 'GSTACK_LITE_STATE_DIR=%q\n' "$STATE_DIR"
 echo "SLUG=$SLUG"
 echo "BRANCH=$BRANCH"

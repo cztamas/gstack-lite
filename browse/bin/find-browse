@@ -1,6 +1,6 @@
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")/.." && pwd)/dist"
-STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
+RUNTIME_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
 PROVIDER="${GSTACK_BROWSER_PROVIDER:-auto}"
 
 find_global() {
@@ -21,8 +21,8 @@ find_local() {
     echo "$ROOT/.gstack-lite/browse/dist/browse"
     return 0
   fi
-  if test -x "$STATE_DIR/browse/dist/browse"; then
-    echo "$STATE_DIR/browse/dist/browse"
+  if test -x "$RUNTIME_DIR/browse/dist/browse"; then
+    echo "$RUNTIME_DIR/browse/dist/browse"
     return 0
   fi
   if test -x "$DIR/browse"; then
@@ -44,7 +44,7 @@ fi
 case "$PROVIDER" in
   auto|"")
     find_global || find_local || {
-      echo "ERROR: gstack-browser is not on PATH and local browser CLI was not found at $STATE_DIR/browse/dist/browse" >&2
+      echo "ERROR: gstack-browser is not on PATH and local browser CLI was not found at $RUNTIME_DIR/browse/dist/browse" >&2
       exit 1
     }
     ;;
@@ -56,7 +56,7 @@ case "$PROVIDER" in
     ;;
   local)
     find_local || {
-      echo "ERROR: GSTACK_BROWSER_PROVIDER=local but local browser CLI was not found at $STATE_DIR/browse/dist/browse" >&2
+      echo "ERROR: GSTACK_BROWSER_PROVIDER=local but local browser CLI was not found at $RUNTIME_DIR/browse/dist/browse" >&2
       exit 1
     }
     ;;

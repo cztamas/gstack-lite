@@ -24,11 +24,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # YC Office Hours
 
@@ -53,7 +54,7 @@ eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 4. **List existing design docs for this project:**
    ```bash
    setopt +o nomatch 2>/dev/null || true  # zsh compat
-   ls -t $HOME/.gstack-lite/projects/$SLUG/*-design-*.md 2>/dev/null
+   ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null
    ```
    If design docs exist, list them: "Prior designs for this project: [titles + dates]"
 
@@ -274,14 +275,14 @@ After the user states the problem (first question in Phase 2A or 2B), search exi
 Extract 3-5 significant keywords from the user's problem statement and grep across design docs:
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-grep -li "<keyword1>\|<keyword2>\|<keyword3>" $HOME/.gstack-lite/projects/$SLUG/*-design-*.md 2>/dev/null
+grep -li "<keyword1>\|<keyword2>\|<keyword3>" $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null
 ```
 
 If matches found, read the matching design docs and surface them:
 - "FYI: Related design found - '{title}' by {user} on {date} (branch: {branch}). Key overlap: {1-line summary of relevant section}."
 - Ask by asking the user: "Should we build on this prior design or start fresh?"
 
-This enables cross-team discovery - multiple users exploring the same project will see each other's design docs in `$HOME/.gstack-lite/projects/`.
+This enables repo-level discovery. Multiple users will see each other's design docs when `.gstack-lite/` is shared, and can keep it local by ignoring that directory.
 
 If no matches found, proceed silently.
 
@@ -401,7 +402,7 @@ Generating visual mockups of the proposed design... (say "skip" if you don't nee
 
 ```bash
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-_DESIGN_DIR="$HOME/.gstack-lite/projects/$SLUG/designs/mockup-$(date +%Y%m%d)"
+_DESIGN_DIR="$GSTACK_LITE_STATE_DIR/designs/mockup-$(date +%Y%m%d)"
 mkdir -p "$_DESIGN_DIR"
 echo "DESIGN_DIR: $_DESIGN_DIR"
 ```
@@ -551,7 +552,7 @@ Count the signals. You'll use this count in Phase 6 to determine which tier of c
 Write the design document to the project directory.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
 USER=$(whoami)
 DATETIME=$(date +%Y%m%d-%H%M%S)
 ```
@@ -559,11 +560,11 @@ DATETIME=$(date +%Y%m%d-%H%M%S)
 **Design lineage:** Before writing, check for existing design docs on this branch:
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-PRIOR=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+PRIOR=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
 ```
 If `$PRIOR` exists, the new doc gets a `Supersedes:` field referencing it. This creates a revision chain - you can trace how a design evolved across office hours sessions.
 
-Write to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-design-{datetime}.md`.
+Write to `$GSTACK_LITE_STATE_DIR/{user}-{branch}-design-{datetime}.md`.
 
 After writing the design doc, tell the user:
 **"Design doc saved to: {full path}. Other skills (/gl-plan-ceo-review, /gl-plan-eng-review) will find it automatically."**
@@ -741,12 +742,9 @@ After the loop completes (PASS, max iterations, or convergence guard):
 2. If issues remain after max iterations or convergence, add a "## Reviewer Concerns"
    section to the document listing each unresolved issue. Downstream skills will see this.
 
-3. Append metrics:
-```bash
-mkdir -p $HOME/.gstack-lite/analytics
-echo '{"skill":"office-hours","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","iterations":ITERATIONS,"issues_found":FOUND,"issues_fixed":FIXED,"remaining":REMAINING,"quality_score":SCORE}' >> $HOME/.gstack-lite/analytics/spec-review.jsonl 2>/dev/null || true
-```
-Replace ITERATIONS, FOUND, FIXED, REMAINING, SCORE with actual values from the review.
+3. Do not append analytics or metrics files. Keep any useful review concerns in
+   the document itself so downstream skills can read them without writing
+   unrelated state.
 
 ---
 
@@ -950,10 +948,7 @@ Append a resource-tracking entry:
 ```bash
 ```
 
-2. Log the selection to analytics:
-```bash
-mkdir -p $HOME/.gstack-lite/analytics
-```
+2. Do not log resource selection analytics in gstack-lite.
 
 3. Ask the user to offer opening the resources:
 
@@ -978,7 +973,7 @@ After the plea, suggest the next step:
 - **`/gl-plan-eng-review`** for well-scoped implementation planning - lock in architecture, tests, edge cases
 - **`/gl-plan-design-review`** for visual/UX design review
 
-The design doc at `$HOME/.gstack-lite/projects/` is automatically discoverable by downstream skills - they will read it during their pre-review system audit.
+The design doc at `$GSTACK_LITE_STATE_DIR/` is automatically discoverable by downstream skills - they will read it during their pre-review system audit.
 
 ---
 

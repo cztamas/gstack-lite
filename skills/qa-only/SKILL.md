@@ -19,11 +19,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # /gl-qa-only: Report-Only QA Testing
 
@@ -74,11 +75,11 @@ mkdir -p "$REPORT_DIR/screenshots"
 
 Before falling back to git diff heuristics, check for richer test plan sources:
 
-1. **Project-scoped test plans:** Check `$HOME/.gstack-lite/projects/` for recent `*-test-plan-*.md` files for this repo
+1. **Project-scoped test plans:** Check `$GSTACK_LITE_STATE_DIR/` for recent `*-test-plan-*.md` files for this repo
    ```bash
    setopt +o nomatch 2>/dev/null || true  # zsh compat
    eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-   ls -t $HOME/.gstack-lite/projects/$SLUG/*-test-plan-*.md 2>/dev/null | head -1
+   ls -t $GSTACK_LITE_STATE_DIR/*-test-plan-*.md 2>/dev/null | head -1
    ```
 2. **Conversation context:** Check if a prior `/gl-plan-eng-review` or `/gl-plan-ceo-review` produced test plan output in this conversation
 3. **Use whichever source is richer.** Fall back to git diff analysis only if neither is available.
@@ -373,9 +374,9 @@ Write the report to both local and project-scoped locations:
 
 **Project-scoped:** Write test outcome artifact for cross-session context:
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
 ```
-Write to `$HOME/.gstack-lite/projects/{slug}/{user}-{branch}-test-outcome-{datetime}.md`
+Write to `$GSTACK_LITE_STATE_DIR/{user}-{branch}-test-outcome-{datetime}.md`
 
 ### Output Structure
 

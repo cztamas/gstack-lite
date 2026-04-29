@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Output the remote slug (owner-repo) for the current git repo.
-# Used by SKILL.md files to derive project-specific paths in $HOME/.gstack-lite/projects/.
+# Kept for compatibility with older skill text. New repo-local state does not
+# need a slugged project subdirectory.
 set -e
 URL=$(git remote get-url origin 2>/dev/null || true)
 if [ -n "$URL" ]; then

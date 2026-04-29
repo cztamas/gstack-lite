@@ -21,11 +21,12 @@ Before following this skill:
 5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
-Lite runtime paths:
+Lite paths:
 
-- State and generated artifacts: `$HOME/.gstack-lite/`
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
 - Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
 # Mega Plan Review Mode
 
@@ -108,21 +109,20 @@ Then read CLAUDE.md, TODOS.md, and any existing architecture docs.
 **Design doc check:**
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-SLUG=$($HOME/.gstack-lite/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-' || echo 'no-branch')
-DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 ```
 If a design doc exists (from `/gl-office-hours`), read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design.
 
-**Handoff note check** (reuses $SLUG and $BRANCH from the design doc check above):
+**Handoff note check** (reuses $BRANCH from the design doc check above):
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-HANDOFF=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/dev/null | head -1)
+HANDOFF=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-ceo-handoff-*.md 2>/dev/null | head -1)
 [ -n "$HANDOFF" ] && echo "HANDOFF_FOUND: $HANDOFF" || echo "NO_HANDOFF"
 ```
-If this block runs in a separate shell from the design doc check, recompute $SLUG and $BRANCH first using the same commands from that block.
+If this block runs in a separate shell from the design doc check, recompute $GSTACK_LITE_STATE_DIR and $BRANCH first using the same commands from that block.
 If a handoff note is found: read it. This contains system audit findings and discussion
 from a prior CEO review session that paused so the user could run `/gl-office-hours`. Use it
 as additional context alongside the design doc. The handoff note helps you avoid re-asking
@@ -179,10 +179,9 @@ Execute every other section at full depth. When the loaded skill's instructions 
 After /gl-office-hours completes, re-run the design doc check:
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-SLUG=$($HOME/.gstack-lite/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-' || echo 'no-branch')
-DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $HOME/.gstack-lite/projects/$SLUG/*-design-*.md 2>/dev/null | head -1)
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
 [ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
 ```
 
@@ -358,17 +357,17 @@ Both are outcome-framed. Only one makes the user feel the cathedral. Lead with t
 After the opt-in/cherry-pick ceremony, write the plan to disk so the vision and decisions survive beyond this conversation. Only run this step for EXPANSION and SELECTIVE EXPANSION modes.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $HOME/.gstack-lite/projects/$SLUG/ceo-plans
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR/ceo-plans
 ```
 
 Before writing, check for existing CEO plans in the ceo-plans/ directory. If any are >30 days old or their branch has been merged/deleted, offer to archive them:
 
 ```bash
-mkdir -p $HOME/.gstack-lite/projects/$SLUG/ceo-plans/archive
-# For each stale plan: mv $HOME/.gstack-lite/projects/$SLUG/ceo-plans/{old-plan}.md $HOME/.gstack-lite/projects/$SLUG/ceo-plans/archive/
+mkdir -p $GSTACK_LITE_STATE_DIR/ceo-plans/archive
+# For each stale plan: mv $GSTACK_LITE_STATE_DIR/ceo-plans/{old-plan}.md $GSTACK_LITE_STATE_DIR/ceo-plans/archive/
 ```
 
-Write to `$HOME/.gstack-lite/projects/$SLUG/ceo-plans/{date}-{feature-slug}.md` using this format:
+Write to `$GSTACK_LITE_STATE_DIR/ceo-plans/{date}-{feature-slug}.md` using this format:
 
 ```markdown
 ---
@@ -459,12 +458,9 @@ After the loop completes (PASS, max iterations, or convergence guard):
 2. If issues remain after max iterations or convergence, add a "## Reviewer Concerns"
    section to the document listing each unresolved issue. Downstream skills will see this.
 
-3. Append metrics:
-```bash
-mkdir -p $HOME/.gstack-lite/analytics
-echo '{"skill":"plan-ceo-review","ts":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","iterations":ITERATIONS,"issues_found":FOUND,"issues_fixed":FIXED,"remaining":REMAINING,"quality_score":SCORE}' >> $HOME/.gstack-lite/analytics/spec-review.jsonl 2>/dev/null || true
-```
-Replace ITERATIONS, FOUND, FIXED, REMAINING, SCORE with actual values from the review.
+3. Do not append analytics or metrics files. Keep any useful review concerns in
+   the document itself so downstream skills can read them without writing
+   unrelated state.
 
 ### 0E. Temporal Interrogation (EXPANSION, SELECTIVE EXPANSION, and HOLD modes)
 Think ahead to implementation: What decisions will need to be made during implementation that should be resolved NOW in the plan?
@@ -872,7 +868,7 @@ the review is complete and the context is no longer needed.
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-rm -f $HOME/.gstack-lite/projects/$SLUG/*-$BRANCH-ceo-handoff-*.md 2>/dev/null || true
+rm -f $GSTACK_LITE_STATE_DIR/*-$BRANCH-ceo-handoff-*.md 2>/dev/null || true
 ```
 
 ### Detect the plan file
@@ -947,7 +943,7 @@ At the end of the review, if the vision produced a compelling feature direction,
 
 "The vision from this review produced {N} accepted scope expansions. Want to promote it to a design doc in the repo?"
 - **A)** Promote to `docs/designs/{FEATURE}.md` (committed to repo, visible to the team)
-- **B)** Keep in `$HOME/.gstack-lite/projects/` only (local, personal reference)
+- **B)** Keep in `$GSTACK_LITE_STATE_DIR/` only (repo-local state; ignore or commit at the project's discretion)
 - **C)** Skip
 
 If promoted, copy the CEO plan content to `docs/designs/{FEATURE}.md` (create the directory if needed) and update the `status` field in the original CEO plan from `ACTIVE` to `PROMOTED`.

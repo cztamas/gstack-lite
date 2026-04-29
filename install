@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd -P)"
-STATE_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
+RUNTIME_DIR="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
 
 HOSTS=()
 
@@ -18,7 +18,8 @@ Installs namespaced gstack-lite skills as symlinks:
   gl-office-hours, gl-review, ...
 
 The installer only writes to the selected host skill directory and
-$HOME/.gstack-lite for shared runtime assets.
+$HOME/.gstack-lite for shared runtime assets. Generated project state is
+written by skills to the active repository's .gstack-lite directory.
 USAGE
 }
 
@@ -75,7 +76,7 @@ link_dir() {
   if [ -L "$dst" ]; then
     local current
     current="$(readlink "$dst" 2>/dev/null || true)"
-    if [[ "$dst" != "$STATE_DIR/"* && "$current" != "$src" ]]; then
+    if [[ "$dst" != "$RUNTIME_DIR/"* && "$current" != "$src" ]]; then
       echo "  warning: $dst already exists as a symlink to $current; leaving it untouched" >&2
       return 0
     fi
@@ -88,20 +89,20 @@ link_dir() {
 }
 
 install_runtime() {
-  mkdir -p "$STATE_DIR"
+  mkdir -p "$RUNTIME_DIR"
 
   for asset in bin browse design design-html review qa ETHOS.md; do
     if [ -e "$ROOT/$asset" ] || [ -L "$ROOT/$asset" ]; then
-      link_dir "$ROOT/$asset" "$STATE_DIR/$asset"
+      link_dir "$ROOT/$asset" "$RUNTIME_DIR/$asset"
     fi
   done
 
-  mkdir -p "$STATE_DIR/skills"
+  mkdir -p "$RUNTIME_DIR/skills"
   for skill_dir in "$ROOT"/skills/*; do
     [ -f "$skill_dir/SKILL.md" ] || continue
     local skill
     skill="$(basename "$skill_dir")"
-    link_dir "$skill_dir" "$STATE_DIR/skills/$skill"
+    link_dir "$skill_dir" "$RUNTIME_DIR/skills/$skill"
   done
 }
 
@@ -123,7 +124,7 @@ install_host() {
 
   echo "gstack-lite ready ($host)"
   echo "  skills: $skills_dir"
-  echo "  runtime: $STATE_DIR"
+  echo "  runtime: $RUNTIME_DIR"
   echo "  commands: ${linked[*]}"
 }
 
@@ -136,12 +137,12 @@ if command -v gstack-browser >/dev/null 2>&1; then
   echo "note: browser provider on PATH: $(command -v gstack-browser)"
 elif command -v gstack-browse >/dev/null 2>&1; then
   echo "note: browser provider on PATH: $(command -v gstack-browse)"
-elif [ ! -x "$STATE_DIR/browse/dist/browse" ]; then
-  echo "note: browse binary not present at $STATE_DIR/browse/dist/browse; browser skills will degrade to host-native browser tools or written QA."
-elif [ ! -d "$STATE_DIR/browse/node_modules/playwright" ]; then
-  echo "note: browser CLI is present, but Playwright dependencies are not installed. Run: cd $STATE_DIR/browse && npm install && npx playwright install chromium"
+elif [ ! -x "$RUNTIME_DIR/browse/dist/browse" ]; then
+  echo "note: browse binary not present at $RUNTIME_DIR/browse/dist/browse; browser skills will degrade to host-native browser tools or written QA."
+elif [ ! -d "$RUNTIME_DIR/browse/node_modules/playwright" ]; then
+  echo "note: browser CLI is present, but Playwright dependencies are not installed. Run: cd $RUNTIME_DIR/browse && npm install && npx playwright install chromium"
 fi
 
-if [ ! -x "$STATE_DIR/design/dist/design" ]; then
-  echo "note: design binary not present at $STATE_DIR/design/dist/design; design skills will use text, wireframes, and available screenshots."
+if [ ! -x "$RUNTIME_DIR/design/dist/design" ]; then
+  echo "note: design binary not present at $RUNTIME_DIR/design/dist/design; design skills will use text, wireframes, and available screenshots."
 fi

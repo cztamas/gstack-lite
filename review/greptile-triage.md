@@ -34,8 +34,8 @@ The `position != null` filter on line-level comments automatically skips outdate
 
 Derive the project-specific history path:
 ```bash
-REMOTE_SLUG=$(browse/bin/remote-slug 2>/dev/null || $HOME/.gstack-lite/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-PROJECT_HISTORY="$HOME/.gstack-lite/projects/$REMOTE_SLUG/greptile-history.md"
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+PROJECT_HISTORY="$GSTACK_LITE_STATE_DIR/greptile-history.md"
 ```
 
 Read `$PROJECT_HISTORY` if it exists (per-project suppressions). Each line records a previous triage outcome:
@@ -183,14 +183,12 @@ When classifying comments, also assess whether Greptile's implied severity match
 
 Before writing, ensure both directories exist:
 ```bash
-REMOTE_SLUG=$(browse/bin/remote-slug 2>/dev/null || $HOME/.gstack-lite/browse/bin/remote-slug 2>/dev/null || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
-mkdir -p "$HOME/.gstack-lite/projects/$REMOTE_SLUG"
-mkdir -p $HOME/.gstack-lite
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+mkdir -p "$GSTACK_LITE_STATE_DIR"
 ```
 
-Append one line per triage outcome to **both** files (per-project for suppressions, global for retro):
-- `$HOME/.gstack-lite/projects/$REMOTE_SLUG/greptile-history.md` (per-project)
-- `$HOME/.gstack-lite/greptile-history.md` (global aggregate)
+Append one line per triage outcome to the per-project suppressions file:
+- `$GSTACK_LITE_STATE_DIR/greptile-history.md`
 
 Format:
 ```
