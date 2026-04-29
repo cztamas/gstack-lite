@@ -40,6 +40,8 @@ command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || ech
 
 If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Install it with `npm i -g gstack-browser`, or degrade to host-native browser tools, screenshots, wireframes, or written QA/review.
 
+Run actual `gstack-browser` commands outside the filesystem/process sandbox. The sandbox commonly blocks Chromium/Playwright from launching or connecting, so sandboxed browser commands can fail even when the CLI is installed correctly.
+
 For local package development, link this checkout:
 
 ```bash

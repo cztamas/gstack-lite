@@ -404,6 +404,13 @@ function normalizeBrowserCommandSetup(markdown) {
   );
 }
 
+function addBrowseSandboxNote(markdown) {
+  const setupText = 'If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Install it with `npm i -g gstack-browser`, or degrade to host-native browser tools, screenshots, wireframes, or written QA/review.';
+  const sandboxNote = 'Run actual `gstack-browser` commands outside the filesystem/process sandbox. The sandbox commonly blocks Chromium/Playwright from launching or connecting, so sandboxed browser commands can fail even when the CLI is installed correctly.';
+  if (markdown.includes(sandboxNote)) return markdown;
+  return markdown.replace(setupText, `${setupText}\n\n${sandboxNote}`);
+}
+
 function normalizeBody(markdown) {
   let out = toAscii(markdown);
 
@@ -464,7 +471,8 @@ async function importSkill(skill) {
   const sourcePath = path.join(sourceRoot, skill, 'SKILL.md');
   const source = await readFile(sourcePath, 'utf8');
   const { desc } = frontmatterOf(source);
-  const body = normalizeBody(findBody(source, skill));
+  const normalizedBody = normalizeBody(findBody(source, skill));
+  const body = skill === 'browse' ? addBrowseSandboxNote(normalizedBody) : normalizedBody;
   const output = `---\nname: gl-${skill}\ndescription: |\n${blockDescription(desc)}\n---\n${litePreamble}${body}`;
   const targetDir = path.join(repoRoot, 'skills', skill);
   await mkdir(targetDir, { recursive: true });
