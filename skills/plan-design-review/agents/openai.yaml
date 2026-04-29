@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-plan-design-review"
+  short_description: "Review UI plans before implementation"
+  default_prompt: "Use $gl-plan-design-review to critique this UI plan before implementation."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-design-review"
+  short_description: "Audit and polish a live UI"
+  default_prompt: "Use $gl-design-review to visually audit and polish this live UI."
+policy:
+  allow_implicit_invocation: true

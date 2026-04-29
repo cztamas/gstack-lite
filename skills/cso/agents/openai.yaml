@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-cso"
+  short_description: "Run a security audit and threat review"
+  default_prompt: "Use $gl-cso to run a security audit and threat review for this codebase."
+policy:
+  allow_implicit_invocation: true

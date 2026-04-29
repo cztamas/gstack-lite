@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-investigate"
+  short_description: "Debug issues with root cause analysis"
+  default_prompt: "Use $gl-investigate to find the root cause of this bug before fixing it."
+policy:
+  allow_implicit_invocation: true

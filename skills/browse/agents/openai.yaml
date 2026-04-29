@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-browse"
+  short_description: "QA websites with headless browser tools"
+  default_prompt: "Use $gl-browse to inspect and test this website in a browser."
+policy:
+  allow_implicit_invocation: true

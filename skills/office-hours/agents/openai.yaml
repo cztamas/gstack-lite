@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-office-hours"
+  short_description: "Brainstorm product ideas with YC-style questions"
+  default_prompt: "Use $gl-office-hours to pressure-test this idea and produce a focused next step."
+policy:
+  allow_implicit_invocation: true

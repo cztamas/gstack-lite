@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-unfreeze"
+  short_description: "Remove the edit boundary"
+  default_prompt: "Use $gl-unfreeze to clear the current edit boundary."
+policy:
+  allow_implicit_invocation: true

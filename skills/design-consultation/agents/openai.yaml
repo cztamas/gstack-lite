@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-design-consultation"
+  short_description: "Create a product design system"
+  default_prompt: "Use $gl-design-consultation to create a design system for this product."
+policy:
+  allow_implicit_invocation: true

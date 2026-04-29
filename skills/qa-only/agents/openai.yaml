@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-qa-only"
+  short_description: "Report web app bugs without fixing them"
+  default_prompt: "Use $gl-qa-only to test this web app and report bugs without fixing them."
+policy:
+  allow_implicit_invocation: true

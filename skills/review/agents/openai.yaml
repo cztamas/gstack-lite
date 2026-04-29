@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-review"
+  short_description: "Run a pre-landing structural code review"
+  default_prompt: "Use $gl-review to run a pre-landing structural review of this diff."
+policy:
+  allow_implicit_invocation: true

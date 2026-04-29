@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-freeze"
+  short_description: "Restrict edits to one directory"
+  default_prompt: "Use $gl-freeze to restrict edits to the relevant directory for this task."
+policy:
+  allow_implicit_invocation: true

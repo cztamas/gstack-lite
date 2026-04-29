@@ -114,6 +114,11 @@ function parseFrontmatter(text, filePath) {
   return { name, desc };
 }
 
+function parseQuotedField(text, field) {
+  const value = text.match(new RegExp(`^  ${field}:\\s*"([^"]+)"$`, 'm'))?.[1];
+  return value ? value.replace(/\\"/g, '"') : undefined;
+}
+
 async function validateSkills() {
   const skillDir = path.join(repoRoot, 'skills');
   const actual = (await readdir(skillDir)).sort();
@@ -133,6 +138,24 @@ async function validateSkills() {
     }
     if (desc.length > 1024) {
       throw new Error(`${rel}: description exceeds 1024 chars (${desc.length})`);
+    }
+
+    const metadataRel = path.join('skills', skill, 'agents', 'openai.yaml');
+    const metadata = await readFile(path.join(repoRoot, metadataRel), 'utf8');
+    const displayName = parseQuotedField(metadata, 'display_name');
+    const shortDescription = parseQuotedField(metadata, 'short_description');
+    const defaultPrompt = parseQuotedField(metadata, 'default_prompt');
+    if (displayName !== `gl-${skill}`) {
+      throw new Error(`${metadataRel}: expected display_name gl-${skill}, got ${displayName}`);
+    }
+    if (!shortDescription) {
+      throw new Error(`${metadataRel}: missing short_description`);
+    }
+    if (!defaultPrompt?.includes(`$gl-${skill}`)) {
+      throw new Error(`${metadataRel}: default_prompt must mention $gl-${skill}`);
+    }
+    if (!/^policy:\n  allow_implicit_invocation: true\n?$/m.test(metadata)) {
+      throw new Error(`${metadataRel}: expected allow_implicit_invocation policy`);
     }
   }
 }

@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-plan-ceo-review"
+  short_description: "Review plans for scope and product ambition"
+  default_prompt: "Use $gl-plan-ceo-review to review this plan for product ambition and scope tradeoffs."
+policy:
+  allow_implicit_invocation: true

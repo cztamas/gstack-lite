@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-qa"
+  short_description: "Test web apps and fix found bugs"
+  default_prompt: "Use $gl-qa to test this web app, fix found bugs, and verify the fixes."
+policy:
+  allow_implicit_invocation: true

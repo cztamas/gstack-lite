@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-design-html"
+  short_description: "Turn approved designs into HTML/CSS"
+  default_prompt: "Use $gl-design-html to turn this approved design into production-quality HTML/CSS."
+policy:
+  allow_implicit_invocation: true

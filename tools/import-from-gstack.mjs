@@ -90,6 +90,73 @@ const liteSkillCommands = [
   'unfreeze',
 ];
 
+const skillInterface = new Map([
+  ['office-hours', {
+    shortDescription: 'Brainstorm product ideas with YC-style questions',
+    defaultPrompt: 'Use $gl-office-hours to pressure-test this idea and produce a focused next step.',
+  }],
+  ['plan-ceo-review', {
+    shortDescription: 'Review plans for scope and product ambition',
+    defaultPrompt: 'Use $gl-plan-ceo-review to review this plan for product ambition and scope tradeoffs.',
+  }],
+  ['plan-eng-review', {
+    shortDescription: 'Review architecture and execution plans',
+    defaultPrompt: 'Use $gl-plan-eng-review to review this implementation plan for architecture, edge cases, and tests.',
+  }],
+  ['plan-design-review', {
+    shortDescription: 'Review UI plans before implementation',
+    defaultPrompt: 'Use $gl-plan-design-review to critique this UI plan before implementation.',
+  }],
+  ['design-consultation', {
+    shortDescription: 'Create a product design system',
+    defaultPrompt: 'Use $gl-design-consultation to create a design system for this product.',
+  }],
+  ['design-shotgun', {
+    shortDescription: 'Explore multiple visual design directions',
+    defaultPrompt: 'Use $gl-design-shotgun to explore several visual directions for this UI.',
+  }],
+  ['design-html', {
+    shortDescription: 'Turn approved designs into HTML/CSS',
+    defaultPrompt: 'Use $gl-design-html to turn this approved design into production-quality HTML/CSS.',
+  }],
+  ['design-review', {
+    shortDescription: 'Audit and polish a live UI',
+    defaultPrompt: 'Use $gl-design-review to visually audit and polish this live UI.',
+  }],
+  ['investigate', {
+    shortDescription: 'Debug issues with root cause analysis',
+    defaultPrompt: 'Use $gl-investigate to find the root cause of this bug before fixing it.',
+  }],
+  ['review', {
+    shortDescription: 'Run a pre-landing structural code review',
+    defaultPrompt: 'Use $gl-review to run a pre-landing structural review of this diff.',
+  }],
+  ['cso', {
+    shortDescription: 'Run a security audit and threat review',
+    defaultPrompt: 'Use $gl-cso to run a security audit and threat review for this codebase.',
+  }],
+  ['browse', {
+    shortDescription: 'QA websites with headless browser tools',
+    defaultPrompt: 'Use $gl-browse to inspect and test this website in a browser.',
+  }],
+  ['qa', {
+    shortDescription: 'Test web apps and fix found bugs',
+    defaultPrompt: 'Use $gl-qa to test this web app, fix found bugs, and verify the fixes.',
+  }],
+  ['qa-only', {
+    shortDescription: 'Report web app bugs without fixing them',
+    defaultPrompt: 'Use $gl-qa-only to test this web app and report bugs without fixing them.',
+  }],
+  ['freeze', {
+    shortDescription: 'Restrict edits to one directory',
+    defaultPrompt: 'Use $gl-freeze to restrict edits to the relevant directory for this task.',
+  }],
+  ['unfreeze', {
+    shortDescription: 'Remove the edit boundary',
+    defaultPrompt: 'Use $gl-unfreeze to clear the current edit boundary.',
+  }],
+]);
+
 const liteSkillCommandPattern = new RegExp(`(^|[\\s(\\[{"'\`])/(?:${liteSkillCommands.join('|')})\\b`, 'g');
 
 function prefixLiteSkillCommands(markdown) {
@@ -328,6 +395,23 @@ function normalizeBody(markdown) {
   return toAscii(out.trimEnd()) + '\n';
 }
 
+function yamlString(value) {
+  return JSON.stringify(value);
+}
+
+function openAiMetadata(skill) {
+  const metadata = skillInterface.get(skill);
+  if (!metadata) throw new Error(`missing OpenAI metadata for ${skill}`);
+  const name = `gl-${skill}`;
+  return `interface:
+  display_name: ${yamlString(name)}
+  short_description: ${yamlString(metadata.shortDescription)}
+  default_prompt: ${yamlString(metadata.defaultPrompt)}
+policy:
+  allow_implicit_invocation: true
+`;
+}
+
 async function importSkill(skill) {
   const sourcePath = path.join(sourceRoot, skill, 'SKILL.md');
   const source = await readFile(sourcePath, 'utf8');
@@ -337,6 +421,8 @@ async function importSkill(skill) {
   const targetDir = path.join(repoRoot, 'skills', skill);
   await mkdir(targetDir, { recursive: true });
   await writeFile(path.join(targetDir, 'SKILL.md'), output);
+  await mkdir(path.join(targetDir, 'agents'), { recursive: true });
+  await writeFile(path.join(targetDir, 'agents', 'openai.yaml'), openAiMetadata(skill));
 }
 
 async function copyIfExists(from, to) {
