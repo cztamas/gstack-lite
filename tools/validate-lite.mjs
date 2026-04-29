@@ -61,6 +61,14 @@ const forbiddenPatterns = [
   /\bslug-cache\b/,
   /\bCLAUDE_PLUGIN_DATA\b/,
   /\bspec-review\.jsonl\b/,
+  /\bfind-browse\b/,
+  /\$B\b/,
+  /\bB=""/,
+  /\bbrowse\/dist\/browse\b/,
+  /\bgstack-browse\b/,
+  /\bGSTACK_BROWSER_(?:PROVIDER|BIN)\b/,
+  /\bBROWSE_NOT_AVAILABLE\b/,
+  /\bbrowse binary\b/i,
   /\.gstack\//,
   /\bAskUserQuestion\b/,
   /<SKILL_DIR>\s*&&\s*\.\/setup/,
@@ -88,6 +96,27 @@ const scanRoots = [
   'design-html',
   'review',
   'qa',
+];
+
+const browserScanRoots = [
+  'skills',
+  'browse/bin',
+  'README.md',
+  'browse/README.md',
+  'install',
+  'browse/package.json',
+  'package-lock.json',
+];
+
+const browserForbiddenPatterns = [
+  /\bfind-browse\b/,
+  /\$B\b/,
+  /\bB=""/,
+  /\bbrowse\/dist\/browse\b/,
+  /\bgstack-browse\b/,
+  /\bGSTACK_BROWSER_(?:PROVIDER|BIN)\b/,
+  /\bBROWSE_NOT_AVAILABLE\b/,
+  /\bbrowse binary\b/i,
 ];
 
 async function exists(filePath) {
@@ -187,6 +216,26 @@ async function validateForbiddenText() {
 
   if (failures.length) {
     throw new Error(`forbidden full-gstack references found:\n${failures.join('\n')}`);
+  }
+
+  const browserFiles = [];
+  for (const root of browserScanRoots) {
+    await walk(root, browserFiles);
+  }
+
+  const browserFailures = [];
+  for (const file of browserFiles) {
+    const text = await readFile(path.join(repoRoot, file), 'utf8');
+    for (const pattern of browserForbiddenPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        browserFailures.push(`${file}: ${match[0]}`);
+      }
+    }
+  }
+
+  if (browserFailures.length) {
+    throw new Error(`forbidden browser resolver references found:\n${browserFailures.join('\n')}`);
   }
 }
 

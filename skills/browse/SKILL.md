@@ -14,13 +14,13 @@ Before following this skill:
 2. Prefer the existing project patterns, frameworks, helper APIs, and test style.
 3. Ask before destructive or hard-to-reverse operations.
 4. Keep changes scoped to the user's request and avoid unrelated refactors.
-5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
+5. Use browser/design tools only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
 Lite paths:
 
 - State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
-- Browser CLI, when installed: `$HOME/.gstack-lite/browse/dist/browse`
+- Browser CLI: `gstack-browser` from the `gstack-browser` npm package
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 - Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
@@ -35,70 +35,51 @@ This lite port intentionally does not include cookie import from installed brows
 Run this before any browse command:
 
 ```bash
-_RUNTIME="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"
-B=""
-if [ -x "$_RUNTIME/browse/bin/find-browse" ]; then
-  B="$("$_RUNTIME/browse/bin/find-browse" 2>/dev/null || true)"
-fi
-[ -z "$B" ] && [ -x "$_RUNTIME/browse/dist/browse" ] && B="$_RUNTIME/browse/dist/browse"
-[ -z "$B" ] && command -v gstack-browser >/dev/null 2>&1 && B="$(command -v gstack-browser)"
-[ -z "$B" ] && command -v gstack-browse >/dev/null 2>&1 && B="$(command -v gstack-browse)"
-if [ -n "$B" ] && [ -x "$B" ]; then
-  echo "READY: $B"
-else
-  echo "NEEDS_SETUP"
-fi
+command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || echo "NEEDS_SETUP"
 ```
 
-If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrade to host-native browser tools if available; otherwise continue with written QA/review and tell the user that `gstack-browser` is missing.
+If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Install it with `npm i -g gstack-browser`, or degrade to host-native browser tools, screenshots, wireframes, or written QA/review.
 
-If the CLI exists but Playwright is missing, install it:
+For local package development, link this checkout:
 
 ```bash
-cd "$_RUNTIME/browse"
+cd browse
 npm install
 npx playwright install chromium
+npm link
 ```
-
-Provider selection:
-
-- Default: use `gstack-browser` on `PATH` when present, then fall back to the local/state wrapper.
-- Published/global: set `GSTACK_BROWSER_PROVIDER=global`.
-- Checkout-local: set `GSTACK_BROWSER_PROVIDER=local`.
-- Hard override: set `GSTACK_BROWSER_BIN=/absolute/path/to/browser`.
-- Local package development: run `npm link` from the `browse/` package; `gstack-browser` on `PATH` will point at the linked checkout.
 
 ## Core QA Patterns
 
 ### Verify a page loads
 
 ```bash
-$B goto http://localhost:3000
-$B text
-$B console
-$B network
-$B is visible ".main-content"
+gstack-browser goto http://localhost:3000
+gstack-browser text
+gstack-browser console
+gstack-browser network
+gstack-browser is visible ".main-content"
 ```
 
 ### Test a user flow
 
 ```bash
-$B goto http://localhost:3000/login
-$B snapshot -i
-$B fill @e1 "user@test.com"
-$B fill @e2 "password"
-$B click @e3
-$B wait ".dashboard"
-$B screenshot /tmp/dashboard.png
+gstack-browser goto http://localhost:3000/login
+gstack-browser snapshot -i
+gstack-browser fill @e1 "user@test.com"
+gstack-browser fill @e2 "password"
+gstack-browser click @e3
+gstack-browser wait ".dashboard"
+gstack-browser screenshot /tmp/dashboard.png
 ```
 
 ### Use refs from snapshots
 
 ```bash
-$B snapshot -i
-$B click @e1
-$B fill @e2 "Ada Lovelace"
-$B attrs @e2
+gstack-browser snapshot -i
+gstack-browser click @e1
+gstack-browser fill @e2 "Ada Lovelace"
+gstack-browser attrs @e2
 ```
 
 Refs are valid until navigation or a major DOM replacement. Rerun `snapshot -i` after page transitions.
@@ -106,9 +87,9 @@ Refs are valid until navigation or a major DOM replacement. Rerun `snapshot -i` 
 ### Visual evidence
 
 ```bash
-$B screenshot /tmp/page.png
-$B screenshot --selector ".card" /tmp/card.png
-$B responsive /tmp/layout
+gstack-browser screenshot /tmp/page.png
+gstack-browser screenshot --selector ".card" /tmp/card.png
+gstack-browser responsive /tmp/layout
 ```
 
 After screenshots, inspect the output image before reporting visual conclusions.
@@ -116,9 +97,9 @@ After screenshots, inspect the output image before reporting visual conclusions.
 ### Render local HTML
 
 ```bash
-$B goto /tmp/report.html
-$B goto ./docs/page.html
-$B load-html /tmp/generated.html
+gstack-browser goto /tmp/report.html
+gstack-browser goto ./docs/page.html
+gstack-browser load-html /tmp/generated.html
 ```
 
 Local file reads are scoped to the current workspace or temp directories.
@@ -126,11 +107,11 @@ Local file reads are scoped to the current workspace or temp directories.
 ### Inspect behavior
 
 ```bash
-$B js "document.title"
-$B js "document.querySelector('#name').value"
-$B storage
-$B cookies
-$B perf
+gstack-browser js "document.title"
+gstack-browser js "document.querySelector('#name').value"
+gstack-browser storage
+gstack-browser cookies
+gstack-browser perf
 ```
 
 ## Supported Commands

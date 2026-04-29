@@ -19,13 +19,13 @@ Before following this skill:
 2. Prefer the existing project patterns, frameworks, helper APIs, and test style.
 3. Ask before destructive or hard-to-reverse operations.
 4. Keep changes scoped to the user's request and avoid unrelated refactors.
-5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
+5. Use browser/design tools only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
 Lite paths:
 
 - State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
-- Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
+- Browser CLI: `gstack-browser` from the `gstack-browser` npm package
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 - Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
@@ -48,21 +48,14 @@ if [ -x "$D" ]; then
 else
   echo "DESIGN_NOT_AVAILABLE"
 fi
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.gstack-lite/browse/dist/browse" ] && B="$_ROOT/.gstack-lite/browse/dist/browse"
-[ -z "$B" ] && B="$HOME/.gstack-lite/browse/dist/browse"
-if [ -x "$B" ]; then
-  echo "BROWSE_READY: $B"
-else
-  echo "BROWSE_NOT_AVAILABLE (will use 'open' to view comparison boards)"
-fi
+command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || echo "NEEDS_SETUP"
 ```
 
 If `DESIGN_NOT_AVAILABLE`: skip visual mockup generation and fall back to the
 existing HTML wireframe approach (`DESIGN_SKETCH`). Design mockups are a
 progressive enhancement, not a hard requirement.
 
-If `BROWSE_NOT_AVAILABLE`: use `open file://...` instead of `$B goto` to open
+If `NEEDS_SETUP`: use `open file://...` instead of `gstack-browser goto` to open
 comparison boards. The user just needs to see the HTML file in any browser.
 
 If `DESIGN_READY`: the design binary is available for visual mockup generation.
@@ -167,18 +160,10 @@ else a few taps away with an obvious path to get there.
 ## SETUP (run this check BEFORE any browse command)
 
 ```bash
-_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.gstack-lite/browse/dist/browse" ] && B="$_ROOT/.gstack-lite/browse/dist/browse"
-[ -z "$B" ] && B="$HOME/.gstack-lite/browse/dist/browse"
-if [ -x "$B" ]; then
-  echo "READY: $B"
-else
-  echo "NEEDS_SETUP"
-fi
+command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || echo "NEEDS_SETUP"
 ```
 
-If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrade to host-native browser tools if available; otherwise continue with written QA/review and tell the user that `$HOME/.gstack-lite/browse/dist/browse` is missing.
+If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Install it with `npm i -g gstack-browser`, or degrade to host-native browser tools, screenshots, wireframes, or written QA/review.
 
 ---
 
@@ -606,13 +591,13 @@ kill $_SERVER_PID 2>/dev/null || true
 
 ### Verification Screenshots
 
-If `$B` is available (browse binary), take verification screenshots at 3 viewports:
+If `gstack-browser` is available, take verification screenshots at 3 viewports:
 
 ```bash
-$B goto "file://<path-to-finalized.html>"
-$B screenshot /tmp/gstack-verify-mobile.png --width 375
-$B screenshot /tmp/gstack-verify-tablet.png --width 768
-$B screenshot /tmp/gstack-verify-desktop.png --width 1440
+gstack-browser goto "file://<path-to-finalized.html>"
+gstack-browser screenshot /tmp/gstack-verify-mobile.png --width 375
+gstack-browser screenshot /tmp/gstack-verify-tablet.png --width 768
+gstack-browser screenshot /tmp/gstack-verify-desktop.png --width 1440
 ```
 
 Show all three screenshots inline using the Read tool. Check for:
@@ -622,8 +607,8 @@ Show all three screenshots inline using the Read tool. Check for:
 
 If issues are found, note them and fix before presenting to the user.
 
-If `$B` is not available, skip verification and note:
-"Browse binary not available. Skipping automated viewport verification."
+If `gstack-browser` is not available, skip verification and note:
+"`gstack-browser` CLI not available. Skipping automated viewport verification."
 
 ### Refinement Loop
 

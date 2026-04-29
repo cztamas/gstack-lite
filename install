@@ -91,7 +91,7 @@ link_dir() {
 install_runtime() {
   mkdir -p "$RUNTIME_DIR"
 
-  for asset in bin browse design design-html review qa ETHOS.md; do
+  for asset in bin design design-html review qa ETHOS.md; do
     if [ -e "$ROOT/$asset" ] || [ -L "$ROOT/$asset" ]; then
       link_dir "$ROOT/$asset" "$RUNTIME_DIR/$asset"
     fi
@@ -134,13 +134,9 @@ for host in "${HOSTS[@]}"; do
 done
 
 if command -v gstack-browser >/dev/null 2>&1; then
-  echo "note: browser provider on PATH: $(command -v gstack-browser)"
-elif command -v gstack-browse >/dev/null 2>&1; then
-  echo "note: browser provider on PATH: $(command -v gstack-browse)"
-elif [ ! -x "$RUNTIME_DIR/browse/dist/browse" ]; then
-  echo "note: browse binary not present at $RUNTIME_DIR/browse/dist/browse; browser skills will degrade to host-native browser tools or written QA."
-elif [ ! -d "$RUNTIME_DIR/browse/node_modules/playwright" ]; then
-  echo "note: browser CLI is present, but Playwright dependencies are not installed. Run: cd $RUNTIME_DIR/browse && npm install && npx playwright install chromium"
+  echo "note: browser CLI on PATH: $(command -v gstack-browser)"
+else
+  echo "note: gstack-browser is not on PATH. Install it with: npm i -g gstack-browser"
 fi
 
 if [ ! -x "$RUNTIME_DIR/design/dist/design" ]; then

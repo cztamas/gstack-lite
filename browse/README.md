@@ -13,9 +13,10 @@ npx playwright install chromium
 Run it from this checkout:
 
 ```bash
-./dist/browse help
-./dist/browse goto http://localhost:3000
-./dist/browse screenshot /tmp/page.png
+npm link
+gstack-browser help
+gstack-browser goto http://localhost:3000
+gstack-browser screenshot /tmp/page.png
 ```
 
 Or install the published package globally:
@@ -24,15 +25,7 @@ Or install the published package globally:
 npm i -g gstack-browser
 ```
 
-## Choosing Local vs Published
-
-The resolver supports three knobs:
-
-- `GSTACK_BROWSER_BIN=/absolute/path/to/browser`: hard override.
-- `GSTACK_BROWSER_PROVIDER=global`: use `gstack-browser` or `gstack-browse` from `PATH`.
-- `GSTACK_BROWSER_PROVIDER=local`: use the checkout/state-local `browse/dist/browse`.
-
-Default `auto` behavior prefers `PATH` first, then the local/state wrapper. This makes the published package the normal provider when installed globally.
+## Local vs Published
 
 For local package development, use npm's global link:
 
@@ -43,25 +36,12 @@ npx playwright install chromium
 npm link
 ```
 
-After that, `gstack-browser` on `PATH` points at this checkout, so `GSTACK_BROWSER_PROVIDER=global` and the default `auto` mode both use the local linked package. To go back to the published package, unlink/reinstall with npm:
+After that, `gstack-browser` on `PATH` points at this checkout. To go back to the published package, unlink/reinstall with npm:
 
 ```bash
 npm unlink -g gstack-browser
 npm i -g gstack-browser
 ```
-
-To bypass `npm link` entirely while working in this repo:
-
-```bash
-GSTACK_BROWSER_PROVIDER=local ./browse/bin/find-browse
-```
-
-The lite skill resolver checks, in order:
-
-1. `GSTACK_BROWSER_BIN`, if set.
-2. `gstack-browser` / `gstack-browse` on `PATH`, unless `GSTACK_BROWSER_PROVIDER=local`.
-3. `$PROJECT/.gstack-lite/browse/dist/browse`
-4. `$GSTACK_LITE_HOME/browse/dist/browse`
 
 Browser session state defaults to `$PROJECT/.gstack-lite/browser/`. Override it with `GSTACK_LITE_STATE_DIR=/absolute/path` for all lite state, or `GSTACK_BROWSER_HOME=/absolute/path` for browser state only.
 

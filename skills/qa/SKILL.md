@@ -19,13 +19,13 @@ Before following this skill:
 2. Prefer the existing project patterns, frameworks, helper APIs, and test style.
 3. Ask before destructive or hard-to-reverse operations.
 4. Keep changes scoped to the user's request and avoid unrelated refactors.
-5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
+5. Use browser/design tools only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
 Lite paths:
 
 - State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
-- Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
+- Browser CLI: `gstack-browser` from the `gstack-browser` npm package
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 - Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
@@ -55,7 +55,7 @@ You are a QA engineer AND a bug-fix engineer. Test web applications like a real 
 
 **CDP mode detection:** Before starting, check if the browse server is connected to the user's real browser:
 ```bash
-$B status 2>/dev/null | grep -q "Mode: cdp" && echo "CDP_MODE=true" || echo "CDP_MODE=false"
+gstack-browser status 2>/dev/null | grep -q "Mode: cdp" && echo "CDP_MODE=true" || echo "CDP_MODE=false"
 ```
 If `CDP_MODE=true`: skip cookie import prompts (the real browser already has cookies), skip user-agent overrides (real browser has real user-agent), and skip headless detection workarounds. The user's real auth sessions are already available.
 
@@ -77,23 +77,15 @@ RECOMMENDATION: Choose A because uncommitted work should be preserved as a commi
 
 After the user chooses, execute their choice (commit or stash), then continue with setup.
 
-**Find the browse binary:**
+**Check `gstack-browser`:**
 
 ## SETUP (run this check BEFORE any browse command)
 
 ```bash
-_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.gstack-lite/browse/dist/browse" ] && B="$_ROOT/.gstack-lite/browse/dist/browse"
-[ -z "$B" ] && B="$HOME/.gstack-lite/browse/dist/browse"
-if [ -x "$B" ]; then
-  echo "READY: $B"
-else
-  echo "NEEDS_SETUP"
-fi
+command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || echo "NEEDS_SETUP"
 ```
 
-If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrade to host-native browser tools if available; otherwise continue with written QA/review and tell the user that `$HOME/.gstack-lite/browse/dist/browse` is missing.
+If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Install it with `npm i -g gstack-browser`, or degrade to host-native browser tools, screenshots, wireframes, or written QA/review.
 
 **Check test framework (bootstrap if needed):**
 
@@ -293,16 +285,16 @@ This is the **primary mode** for developers verifying their work. When the user 
    - View/template/component files -> which pages render them
    - Model/service files -> which pages use those models (check controllers that reference them)
    - CSS/style files -> which pages include those stylesheets
-   - API endpoints -> test them directly with `$B js "await fetch('/api/...')"`
+   - API endpoints -> test them directly with `gstack-browser js "await fetch('/api/...')"`
    - Static pages (markdown, HTML) -> navigate to them directly
 
    **If no obvious pages/routes are identified from the diff:** Do not skip browser testing. The user invoked /gl-qa because they want browser-based verification. Fall back to Quick mode - navigate to the homepage, follow the top 5 navigation targets, check console for errors, and test any interactive elements found. Backend, config, and infrastructure changes affect app behavior - always verify the app still works.
 
 3. **Detect the running app** - check common local dev ports:
    ```bash
-   $B goto http://localhost:3000 2>/dev/null && echo "Found app on :3000" || \
-   $B goto http://localhost:4000 2>/dev/null && echo "Found app on :4000" || \
-   $B goto http://localhost:8080 2>/dev/null && echo "Found app on :8080"
+   gstack-browser goto http://localhost:3000 2>/dev/null && echo "Found app on :3000" || \
+   gstack-browser goto http://localhost:4000 2>/dev/null && echo "Found app on :4000" || \
+   gstack-browser goto http://localhost:8080 2>/dev/null && echo "Found app on :8080"
    ```
    If no local app is found, check for a staging/preview URL in the PR or environment. If nothing works, ask the user for the URL.
 
@@ -339,7 +331,7 @@ Run full mode, then load `baseline.json` from a previous run. Diff: which issues
 
 ### Phase 1: Initialize
 
-1. Find browse binary (see Setup above)
+1. Check `gstack-browser` (see Setup above)
 2. Create output directories
 3. Copy report template from `qa/templates/qa-report-template.md` to output dir
 4. Start timer for duration tracking
@@ -349,19 +341,19 @@ Run full mode, then load `baseline.json` from a previous run. Diff: which issues
 **If the user specified auth credentials:**
 
 ```bash
-$B goto <login-url>
-$B snapshot -i                    # find the login form
-$B fill @e3 "user@example.com"
-$B fill @e4 "[REDACTED]"         # NEVER include real passwords in report
-$B click @e5                      # submit
-$B snapshot -D                    # verify login succeeded
+gstack-browser goto <login-url>
+gstack-browser snapshot -i                    # find the login form
+gstack-browser fill @e3 "user@example.com"
+gstack-browser fill @e4 "[REDACTED]"         # NEVER include real passwords in report
+gstack-browser click @e5                      # submit
+gstack-browser snapshot -D                    # verify login succeeded
 ```
 
 **If the user provided a cookie file:**
 
 ```bash
-$B cookie-import cookies.json
-$B goto <target-url>
+gstack-browser cookie-import cookies.json
+gstack-browser goto <target-url>
 ```
 
 **If 2FA/OTP is required:** Ask the user for the code and wait.
@@ -373,10 +365,10 @@ $B goto <target-url>
 Get a map of the application:
 
 ```bash
-$B goto <target-url>
-$B snapshot -i -a -o "$REPORT_DIR/screenshots/initial.png"
-$B links                          # map navigation structure
-$B console --errors               # any errors on landing?
+gstack-browser goto <target-url>
+gstack-browser snapshot -i -a -o "$REPORT_DIR/screenshots/initial.png"
+gstack-browser links                          # map navigation structure
+gstack-browser console --errors               # any errors on landing?
 ```
 
 **Detect framework** (note in report metadata):
@@ -392,9 +384,9 @@ $B console --errors               # any errors on landing?
 Visit pages systematically. At each page:
 
 ```bash
-$B goto <page-url>
-$B snapshot -i -a -o "$REPORT_DIR/screenshots/page-name.png"
-$B console --errors
+gstack-browser goto <page-url>
+gstack-browser snapshot -i -a -o "$REPORT_DIR/screenshots/page-name.png"
+gstack-browser console --errors
 ```
 
 Then follow the **per-page exploration checklist** (see `qa/references/issue-taxonomy.md`):
@@ -407,9 +399,9 @@ Then follow the **per-page exploration checklist** (see `qa/references/issue-tax
 6. **Console** - Any new JS errors after interactions?
 7. **Responsiveness** - Check mobile viewport if relevant:
    ```bash
-   $B viewport 375x812
-   $B screenshot "$REPORT_DIR/screenshots/page-mobile.png"
-   $B viewport 1280x720
+   gstack-browser viewport 375x812
+   gstack-browser screenshot "$REPORT_DIR/screenshots/page-mobile.png"
+   gstack-browser viewport 1280x720
    ```
 
 **Depth judgment:** Spend more time on core features (homepage, dashboard, checkout, search) and less on secondary pages (about, terms, privacy).
@@ -430,10 +422,10 @@ Document each issue **immediately when found** - don't batch them.
 5. Write repro steps referencing screenshots
 
 ```bash
-$B screenshot "$REPORT_DIR/screenshots/issue-001-step-1.png"
-$B click @e5
-$B screenshot "$REPORT_DIR/screenshots/issue-001-result.png"
-$B snapshot -D
+gstack-browser screenshot "$REPORT_DIR/screenshots/issue-001-step-1.png"
+gstack-browser click @e5
+gstack-browser screenshot "$REPORT_DIR/screenshots/issue-001-result.png"
+gstack-browser snapshot -D
 ```
 
 **Static bugs** (typos, layout issues, missing images):
@@ -441,7 +433,7 @@ $B snapshot -D
 2. Describe what's wrong
 
 ```bash
-$B snapshot -i -a -o "$REPORT_DIR/screenshots/issue-002.png"
+gstack-browser snapshot -i -a -o "$REPORT_DIR/screenshots/issue-002.png"
 ```
 
 **Write each issue to the report immediately** using the template format from `qa/templates/qa-report-template.md`.
@@ -551,7 +543,7 @@ Minimum 0 per category.
 8. **Depth over breadth.** 5-10 well-documented issues with evidence > 20 vague descriptions.
 9. **Never delete output files.** Screenshots and reports accumulate - that's intentional.
 10. **Use `snapshot -C` for tricky UIs.** Finds clickable divs that the accessibility tree misses.
-11. **Show screenshots to the user.** After every `$B screenshot`, `$B snapshot -a -o`, or `$B responsive` command, use the Read tool on the output file(s) so the user can see them inline. For `responsive` (3 files), Read all three. This is critical - without it, screenshots are invisible to the user.
+11. **Show screenshots to the user.** After every `gstack-browser screenshot`, `gstack-browser snapshot -a -o`, or `gstack-browser responsive` command, use the Read tool on the output file(s) so the user can see them inline. For `responsive` (3 files), Read all three. This is critical - without it, screenshots are invisible to the user.
 12. **Never refuse to use the browser.** When the user invokes /gl-qa or /gl-qa-only, they are requesting browser-based testing. Never suggest evals, unit tests, or other alternatives as a substitute. Even if the diff appears to have no UI changes, backend changes affect app behavior - always open the browser and test.
 
 Record baseline health score at end of Phase 6.
@@ -627,10 +619,10 @@ git commit -m "fix(qa): ISSUE-NNN - short description"
 - Use `snapshot -D` to verify the change had the expected effect
 
 ```bash
-$B goto <affected-url>
-$B screenshot "$REPORT_DIR/screenshots/issue-NNN-after.png"
-$B console --errors
-$B snapshot -D
+gstack-browser goto <affected-url>
+gstack-browser screenshot "$REPORT_DIR/screenshots/issue-NNN-after.png"
+gstack-browser console --errors
+gstack-browser snapshot -D
 ```
 
 ### 8e. Classify

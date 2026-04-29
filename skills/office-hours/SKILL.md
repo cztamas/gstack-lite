@@ -21,13 +21,13 @@ Before following this skill:
 2. Prefer the existing project patterns, frameworks, helper APIs, and test style.
 3. Ask before destructive or hard-to-reverse operations.
 4. Keep changes scoped to the user's request and avoid unrelated refactors.
-5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
+5. Use browser/design tools only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
 Lite paths:
 
 - State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
-- Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
+- Browser CLI: `gstack-browser` from the `gstack-browser` npm package
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 - Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
@@ -493,12 +493,12 @@ SKETCH_FILE="/tmp/gstack-sketch-$(date +%s).html"
 **Step 3: Render and capture**
 
 ```bash
-$B goto "file://$SKETCH_FILE"
-$B screenshot /tmp/gstack-sketch.png
+gstack-browser goto "file://$SKETCH_FILE"
+gstack-browser screenshot /tmp/gstack-sketch.png
 ```
 
-If `$B` is not available (browse binary missing), skip the render step. Tell the
-user: "Visual sketch rendering requires the optional browse binary. Continuing with the written wireframe."
+If `gstack-browser` is not available, skip the render step. Tell the
+user: "Visual sketch rendering requires the optional `gstack-browser` CLI. Continuing with the written wireframe."
 
 **Step 4: Present and iterate**
 

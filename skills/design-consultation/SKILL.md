@@ -17,13 +17,13 @@ Before following this skill:
 2. Prefer the existing project patterns, frameworks, helper APIs, and test style.
 3. Ask before destructive or hard-to-reverse operations.
 4. Keep changes scoped to the user's request and avoid unrelated refactors.
-5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
+5. Use browser/design tools only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
 Lite paths:
 
 - State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
-- Browser binary, when installed: `$HOME/.gstack-lite/browse/dist/browse`
+- Browser CLI: `gstack-browser` from the `gstack-browser` npm package
 - Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
 - Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
 
@@ -67,23 +67,15 @@ If office-hours output exists, read it - the product context is pre-filled.
 
 If the codebase is empty and purpose is unclear, say: *"I don't have a clear picture of what you're building yet. Want to explore first with `/gl-office-hours`? Once we know the product direction, we can set up the design system."*
 
-**Find the browse binary (optional - enables visual competitive research):**
+**Check `gstack-browser` (optional - enables visual competitive research):**
 
 ## SETUP (run this check BEFORE any browse command)
 
 ```bash
-_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.gstack-lite/browse/dist/browse" ] && B="$_ROOT/.gstack-lite/browse/dist/browse"
-[ -z "$B" ] && B="$HOME/.gstack-lite/browse/dist/browse"
-if [ -x "$B" ]; then
-  echo "READY: $B"
-else
-  echo "NEEDS_SETUP"
-fi
+command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || echo "NEEDS_SETUP"
 ```
 
-If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrade to host-native browser tools if available; otherwise continue with written QA/review and tell the user that `$HOME/.gstack-lite/browse/dist/browse` is missing.
+If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Install it with `npm i -g gstack-browser`, or degrade to host-native browser tools, screenshots, wireframes, or written QA/review.
 
 If browse is not available, that's fine - visual research is optional. The skill works without it using WebSearch and your built-in design knowledge.
 
@@ -101,21 +93,14 @@ if [ -x "$D" ]; then
 else
   echo "DESIGN_NOT_AVAILABLE"
 fi
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.gstack-lite/browse/dist/browse" ] && B="$_ROOT/.gstack-lite/browse/dist/browse"
-[ -z "$B" ] && B="$HOME/.gstack-lite/browse/dist/browse"
-if [ -x "$B" ]; then
-  echo "BROWSE_READY: $B"
-else
-  echo "BROWSE_NOT_AVAILABLE (will use 'open' to view comparison boards)"
-fi
+command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || echo "NEEDS_SETUP"
 ```
 
 If `DESIGN_NOT_AVAILABLE`: skip visual mockup generation and fall back to the
 existing HTML wireframe approach (`DESIGN_SKETCH`). Design mockups are a
 progressive enhancement, not a hard requirement.
 
-If `BROWSE_NOT_AVAILABLE`: use `open file://...` instead of `$B goto` to open
+If `NEEDS_SETUP`: use `open file://...` instead of `gstack-browser goto` to open
 comparison boards. The user just needs to see the HTML file in any browser.
 
 If `DESIGN_READY`: the design binary is available for visual mockup generation.
@@ -222,12 +207,12 @@ Use WebSearch to find 5-10 products in their space. Search for:
 
 **Step 2: Visual research via browse (if available)**
 
-If the browse binary is available (`$B` is set), visit the top 3-5 sites in the space and capture visual evidence:
+If `gstack-browser` is available, visit the top 3-5 sites in the space and capture visual evidence:
 
 ```bash
-$B goto "https://example-site.com"
-$B screenshot "/tmp/design-research-site-name.png"
-$B snapshot
+gstack-browser goto "https://example-site.com"
+gstack-browser screenshot "/tmp/design-research-site-name.png"
+gstack-browser snapshot
 ```
 
 For each site, analyze: fonts actually used, color palette, layout approach, spacing density, aesthetic direction. The screenshot gives you the feel; the snapshot gives you structural data.

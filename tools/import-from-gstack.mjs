@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { chmod, mkdir, readFile, writeFile, cp, readdir, stat } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, cp, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,13 +39,13 @@ Before following this skill:
 2. Prefer the existing project patterns, frameworks, helper APIs, and test style.
 3. Ask before destructive or hard-to-reverse operations.
 4. Keep changes scoped to the user's request and avoid unrelated refactors.
-5. Use browser/design binaries only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
+5. Use browser/design tools only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
 6. Report what changed, what was verified, and any remaining risk.
 
 Lite paths:
 
 - State and generated artifacts: active repo \`.gstack-lite/\` (resolved as \`$GSTACK_LITE_STATE_DIR\`; override with \`GSTACK_LITE_STATE_DIR\`)
-- Browser binary, when installed: \`$HOME/.gstack-lite/browse/dist/browse\`
+- Browser CLI: \`gstack-browser\` from the \`gstack-browser\` npm package
 - Design binary, when installed: \`$HOME/.gstack-lite/design/dist/design\`
 - Before reading or writing project state, run \`eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"\` to populate \`$GSTACK_LITE_STATE_DIR\` and \`$BRANCH\`
 
@@ -70,7 +70,7 @@ const stripSectionHeadings = [
   /^### Codex structured review\b/,
 ];
 
-const forbiddenLine = /\b(gstack-(?:config|update-check|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)|codex\s+(?:exec|review)|which codex|CODEX_|CLAUDE_SKILL_DIR|GBrain|telemetry prompt|Remote telemetry|Local analytics|Session timeline|skill-usage\.jsonl|analytics\/skill-usage|spec-review\.jsonl|builder-profile\.jsonl|check-freeze)\b/i;
+const forbiddenLine = /\b(gstack-(?:config|update-check|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)|gstack-browse|find-browse|GSTACK_BROWSER_(?:PROVIDER|BIN)|BROWSE_NOT_AVAILABLE|codex\s+(?:exec|review)|which codex|CODEX_|CLAUDE_SKILL_DIR|GBrain|telemetry prompt|Remote telemetry|Local analytics|Session timeline|skill-usage\.jsonl|analytics\/skill-usage|spec-review\.jsonl|builder-profile\.jsonl|check-freeze)\b/i;
 
 const liteSkillCommands = [
   'office-hours',
@@ -170,7 +170,7 @@ function prefixLiteSkillCommands(markdown) {
 const pathRewrites = [
   [/~\/\.claude\/skills\/gstack\/bin\/gstack-slug/g, '$HOME/.gstack-lite/bin/gl-slug'],
   [/~\/\.claude\/skills\/gstack\/bin\/gstack-diff-scope/g, '$HOME/.gstack-lite/bin/gl-diff-scope'],
-  [/~\/\.claude\/skills\/gstack\/browse\/dist\/browse/g, '$HOME/.gstack-lite/browse/dist/browse'],
+  [/~\/\.claude\/skills\/gstack\/browse\/dist\/browse/g, 'gstack-browser'],
   [/~\/\.claude\/skills\/gstack\/design\/dist\/design/g, '$HOME/.gstack-lite/design/dist/design'],
   [/~\/\.claude\/skills\/gstack\/design-html\/vendor\/pretext\.js/g, '$HOME/.gstack-lite/design-html/vendor/pretext.js'],
   [/~\/\.claude\/skills\/gstack\/ETHOS\.md/g, '$HOME/.gstack-lite/ETHOS.md'],
@@ -216,7 +216,7 @@ const hostNeutralRewrites = [
   [/AskUserQuestion:/g, 'Ask the user:'],
   [/AskUserQuestion/g, 'user question'],
   [/Every diff gets adversarial review from both Claude and Codex\./g, 'Every diff should get at least one adversarial pass.'],
-  [/Visual sketch requires the browse binary\. Run the setup script to enable it\./g, 'Visual sketch rendering requires the optional browse binary. Continuing with the written wireframe.'],
+  [/Visual sketch requires the browse binary\. Run the setup script to enable it\./g, 'Visual sketch rendering requires `gstack-browser`. Continuing with the written wireframe.'],
   [/The gstack(?:-lite)? designer isn't set up yet\. Run `\$D setup` to enable visual mockups\. Proceeding with text-only review, but you're missing the best part\./g, 'The optional lite design binary is not available. Proceeding with text-only review.'],
 ];
 
@@ -397,11 +397,11 @@ function removeLiteAnalytics(markdown) {
     );
 }
 
-function clarifyRuntimeNames(markdown) {
-  return markdown
-    .replace(/_STATE="\$\{GSTACK_LITE_HOME:-\$HOME\/\.gstack-lite\}"/g, '_RUNTIME="${GSTACK_LITE_HOME:-$HOME/.gstack-lite}"')
-    .replace(/"\$_STATE\/browse/g, '"$_RUNTIME/browse')
-    .replace(/\$_STATE\/browse/g, '$_RUNTIME/browse');
+function normalizeBrowserCommandSetup(markdown) {
+  return markdown.replace(
+    /B=""\n\[ -n "\$_ROOT" \] && \[ -x "\$_ROOT\/\.gstack-lite\/browse\/dist\/browse" \] && B="\$_ROOT\/\.gstack-lite\/browse\/dist\/browse"\n\[ -z "\$B" \] && B="\$HOME\/\.gstack-lite\/browse\/dist\/browse"\nif \[ -x "\$B" \]; then\n  echo "(?:BROWSE_READY|READY): \$B"\nelse\n  echo "(?:BROWSE_NOT_AVAILABLE \(will use 'open' to view comparison boards\)|NEEDS_SETUP)"\nfi/g,
+    'command -v gstack-browser >/dev/null 2>&1 && echo "READY: gstack-browser" || echo "NEEDS_SETUP"',
+  );
 }
 
 function normalizeBody(markdown) {
@@ -418,17 +418,27 @@ function normalizeBody(markdown) {
   out = prefixLiteSkillCommands(out);
   out = rewriteProjectStatePaths(out);
   out = removeLiteAnalytics(out);
-  out = clarifyRuntimeNames(out);
+  out = normalizeBrowserCommandSetup(out);
 
   out = stripSections(out);
   out = out.replace(
     /^If `NEEDS_SETUP`:\n1\. Tell the user:[\s\S]*?^   ```\n/gm,
-    'If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Degrade to host-native browser tools if available; otherwise continue with written QA/review and tell the user that `$HOME/.gstack-lite/browse/dist/browse` is missing.\n',
+    'If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Install `gstack-browser` with `npm i -g gstack-browser`, or degrade to host-native browser tools, screenshots, wireframes, or written QA/review.\n',
   );
+  out = out.replace(/\$B\b/g, 'gstack-browser');
+  out = out.replace(/\bgstack-browse\b/g, 'gstack-browser');
+  out = out.replace(/\$HOME\/\.gstack-lite\/browse\/dist\/browse/g, 'gstack-browser');
+  out = out.replace(/\bbrowse\/dist\/browse\b/g, 'gstack-browser');
+  out = out.replace(/browse binary/g, '`gstack-browser` CLI');
+  out = out.replace(/Browse binary/g, '`gstack-browser` CLI');
+  out = out.replace(/Find the `gstack-browser` CLI/g, 'Check `gstack-browser`');
+  out = out.replace(/Find browse binary/g, 'Check `gstack-browser`');
+  out = out.replace(/Find the browse binary/g, 'Check `gstack-browser`');
+  out = out.replace(/BROWSE_NOT_AVAILABLE/g, 'NEEDS_SETUP');
   out = removeForbiddenLines(out);
   out = rewriteProjectStatePaths(out);
   out = removeLiteAnalytics(out);
-  out = clarifyRuntimeNames(out);
+  out = normalizeBrowserCommandSetup(out);
   out = out.replace(/\n{4,}/g, '\n\n\n');
   return toAscii(out.trimEnd()) + '\n';
 }
@@ -560,16 +570,6 @@ echo "BRANCH=$BRANCH"
   await copyTextIfExists(path.join(sourceRoot, 'qa', 'templates', 'qa-report-template.md'), path.join(repoRoot, 'qa', 'templates', 'qa-report-template.md'), toAscii);
   await copyTextIfExists(path.join(sourceRoot, 'qa', 'references', 'issue-taxonomy.md'), path.join(repoRoot, 'qa', 'references', 'issue-taxonomy.md'), toAscii);
   await copyTextIfExists(path.join(sourceRoot, 'ETHOS.md'), path.join(repoRoot, 'ETHOS.md'), toAscii);
-
-  await copyTextIfExists(
-    path.join(sourceRoot, 'browse', 'bin', 'remote-slug'),
-    path.join(repoRoot, 'browse', 'bin', 'remote-slug'),
-    (text) => toAscii(text
-      .replaceAll('~/.gstack', '$HOME/.gstack-lite')
-      .replace('Used by SKILL.md files to derive project-specific paths in $HOME/.gstack-lite/projects/.', 'Kept for compatibility with older skill text. New repo-local state does not need a slugged project subdirectory.')),
-  );
-  await chmod(path.join(repoRoot, 'browse', 'bin', 'remote-slug'), 0o755);
-  await chmod(path.join(repoRoot, 'browse', 'bin', 'find-browse'), 0o755);
 }
 
 async function main() {

@@ -5,8 +5,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "gstack-browser": "./src/cli.js",
-    "gstack-browse": "./src/cli.js"
+    "gstack-browser": "./src/cli.js"
   },
   "scripts": {
     "check": "node --check src/cli.js && node --check src/server.js && node --check src/config.js",

@@ -57,34 +57,30 @@ Generated plans, browser state, QA reports, design artifacts, and other writable
 
 The browser and design runtimes are optional progressive enhancements:
 
-- Browser CLI: `$HOME/.gstack-lite/browse/dist/browse`
+- Browser CLI: `gstack-browser` from the `gstack-browser` npm package
 - Design: `$HOME/.gstack-lite/design/dist/design`
 - Pretext vendor file: `$HOME/.gstack-lite/design-html/vendor/pretext.js`
 
 Writable project state uses `<repo>/.gstack-lite/` by default. Override that with `GSTACK_LITE_STATE_DIR=/absolute/path` if a repository needs a different state location.
 
-The browser CLI is a Node + Playwright package in `browse/`. For a local checkout:
+Install the browser CLI from npm:
+
+```bash
+npm i -g gstack-browser
+gstack-browser help
+```
+
+For local browser package development, link this checkout:
 
 ```bash
 cd browse
 npm install
 npx playwright install chromium
+npm link
+gstack-browser help
 ```
 
-It can also be installed globally as `gstack-browser`:
-
-```bash
-npm i -g gstack-browser
-```
-
-Browser provider selection:
-
-- Default: use `gstack-browser` on `PATH` when present, then fall back to the local/state wrapper.
-- Published/global: `GSTACK_BROWSER_PROVIDER=global`
-- Checkout-local: `GSTACK_BROWSER_PROVIDER=local`
-- Explicit binary: `GSTACK_BROWSER_BIN=/absolute/path/to/browser`
-
-For local browser package development, run `npm link` from `browse/`; the global `gstack-browser` command will point at this checkout until you unlink/reinstall it. If a runtime is missing, the relevant skills should fall back to host-native browser tools, screenshots, wireframes, or written review.
+If a runtime is missing, the relevant skills should fall back to host-native browser tools, screenshots, wireframes, or written review.
 
 ## Development
 
