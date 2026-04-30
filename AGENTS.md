@@ -15,7 +15,7 @@ Default lite skills:
 
 - Planning/product: `gl-office-hours`, `gl-plan-ceo-review`, `gl-plan-eng-review`
 - Design: `gl-plan-design-review`, `gl-design-consultation`, `gl-design-shotgun`, `gl-design-html`, `gl-design-review`
-- Debugging/review/security: `gl-investigate`, `gl-review`, `gl-cso`
+- Debugging/review/security: `gl-investigate`, `gl-quick-fix`, `gl-review`, `gl-cso`
 - Browser QA: `gl-browse`, `gl-qa`, `gl-qa-only`
 - Safety: `gl-freeze`, `gl-unfreeze`
 

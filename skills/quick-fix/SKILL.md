@@ -1,0 +1,206 @@
+---
+name: gl-quick-fix
+description: |
+  Disciplined small-fix workflow. Use when the user has one or more issues
+  expected to be small or obvious and wants Codex to think through each fix,
+  implement simple low-risk fixes, and stop for confirmation when ambiguity,
+  tradeoffs, or broader blast radius appear. Handles multiple issues
+  sequentially. Use for "quick fix", "small bug", "minor cleanup", "fix these
+  issues", and "should be simple" requests. Prefer /gl-investigate for unclear
+  root-cause debugging, /gl-plan-eng-review for planned architecture review,
+  and /gl-qa for full web QA. (gstack-lite)
+---
+## Lite Preamble
+
+Before following this skill:
+
+1. Read relevant project instructions first: `AGENTS.md`, `CLAUDE.md`, Cursor rules, or local equivalents.
+2. Prefer the existing project patterns, frameworks, helper APIs, and test style.
+3. Ask before destructive or hard-to-reverse operations.
+4. Keep changes scoped to the user's request and avoid unrelated refactors.
+5. Use browser/design tools only when available. If unavailable, degrade to host-native browser tools, screenshots, wireframes, or written review.
+6. Report what changed, what was verified, and any remaining risk.
+
+Lite paths:
+
+- State and generated artifacts: active repo `.gstack-lite/` (resolved as `$GSTACK_LITE_STATE_DIR`; override with `GSTACK_LITE_STATE_DIR`)
+- Browser CLI: `gstack-browser` from the `gstack-browser` npm package
+- Design binary, when installed: `$HOME/.gstack-lite/design/dist/design`
+- Before reading or writing project state, run `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"` to populate `$GSTACK_LITE_STATE_DIR` and `$BRANCH`
+
+# /gl-quick-fix - Think, Then Fix
+
+Use this skill for small issue batches where speed matters but guesses are not
+acceptable. The workflow is intentionally lighter than `/gl-investigate` and
+`/gl-plan-eng-review`: do enough planning to avoid hacks, fix what is simple,
+and escalate anything that is not simple.
+
+## Core Rule
+
+Do not patch symptoms. A quick fix is allowed only when the cause, invariant,
+and verification path are clear.
+
+If that bar is not met, stop and present options instead of guessing.
+
+## Setup
+
+1. Read the user's issue list and split it into numbered issues in the order given.
+2. Check the worktree before editing:
+   ```bash
+   git status --short
+   ```
+3. If `.gstack-lite/freeze-dir.txt` exists, read it and keep edits inside that boundary unless the user explicitly widens scope.
+4. Identify the smallest relevant file set with `rg`, `rg --files`, and targeted reads.
+5. If the user's request includes production credentials, destructive operations, broad restores, force pushes, database deletion, or similar hard-to-reverse actions, ask for explicit confirmation before doing anything.
+
+## Per-Issue Loop
+
+Handle issues sequentially. Finish or escalate the current issue before moving
+to the next one.
+
+### 1. Frame
+
+Write a one-line frame for the issue:
+
+```text
+Issue N: <symptom or requested change> -> likely area: <file/module/unknown>
+```
+
+If the issue is underspecified and cannot be located from the repo, ask one
+concise question. Otherwise continue.
+
+### 2. Inspect
+
+Read only the code needed to answer:
+
+- What behavior is wrong or missing?
+- Where is the smallest responsible codepath?
+- What existing pattern should this follow?
+- What test or command would prove the fix?
+
+For bug reports, reproduce when practical. For text, config, docs, or obvious
+mechanical issues, reading the affected file may be enough.
+
+### 3. Classify
+
+Classify the issue before editing.
+
+**SIMPLE** means all of these are true:
+
+- The cause or desired invariant is clear.
+- The intended behavior has no meaningful product or architecture tradeoff.
+- The likely edit touches at most 2 production files, plus focused tests or docs.
+- No schema migration, public API contract, auth boundary, concurrency model,
+  data deletion, payment flow, or production resource is involved.
+- A targeted verification command is available, or the change is clearly
+  inspectable without a test runner.
+- Confidence is at least 7/10 after reading the relevant code.
+
+**NEEDS PLAN** means any of these are true:
+
+- The cause is unclear after a bounded inspection.
+- More than 2 production files need coordinated changes.
+- There are multiple reasonable fixes with different tradeoffs.
+- The issue touches security, authorization, persistence, migrations,
+  concurrency, billing, production data, generated artifacts, or shared APIs.
+- A larger refactor appears necessary to avoid a hack.
+- Verification is unclear or would require a broader test strategy.
+- The user-facing behavior is ambiguous.
+
+**NEEDS INVESTIGATION** means it is a bug-like symptom without confirmed root
+cause, the reproduction is unclear, or early hypotheses do not match the code.
+Recommend `/gl-investigate` or switch into that deeper workflow if the user
+confirms.
+
+### 4. Act on the Classification
+
+For **SIMPLE**:
+
+1. State the cause and planned edit in 1-2 sentences.
+2. Make the smallest clean change that fixes the root cause.
+3. Add or update a focused regression test unless the change is docs-only,
+   copy-only, or the repo has no practical test surface for it.
+4. Run the narrowest meaningful verification first. Run broader checks when
+   touching shared behavior.
+5. If verification fails because the fix is wrong, keep investigating within
+   the simple scope. If the fix expands beyond the SIMPLE criteria, stop and
+   reclassify as NEEDS PLAN.
+
+For **NEEDS PLAN**:
+
+Do not edit files for that issue. Present a short decision brief:
+
+```text
+Issue N needs a plan.
+Facts found: <specific files/behaviors observed>
+Why this is not a quick fix: <blast radius/tradeoff/unknown>
+
+Options:
+A) <recommended approach> - effort, risk, verification
+B) <smaller/safer alternative> - effort, risk, verification
+C) Do nothing for now - consequence
+
+Recommendation: <one sentence tied to right-sized diff, tests, or explicitness>
+```
+
+Ask the user which option to take, then stop. Do not continue to later issues
+unless the user explicitly asked to skip complex issues and continue.
+
+For **NEEDS INVESTIGATION**:
+
+Do not guess. Report the evidence gathered, explain why root cause is not yet
+confirmed, and recommend `/gl-investigate` with the current issue as input.
+
+## Multi-Issue Rules
+
+- Keep a queue table: issue, classification, status, files changed, verification.
+- Do not batch unrelated fixes into one edit just because they are small.
+- If one issue reveals the user's premise is wrong, say so and reclassify before editing.
+- If later issues depend on a complex unresolved issue, stop and explain the dependency.
+- If later issues are independent and the user already authorized "skip complex and continue", continue with the next issue.
+
+## Testing Standard
+
+Use test effort proportional to risk:
+
+- Copy/docs/config typo: inspect the diff and run formatting or validation if present.
+- Local logic: add or update a unit test and run that test file.
+- Shared helper or API behavior: run the focused test plus the nearest package or workspace tests.
+- UI behavior: run the focused test if present and use browser verification when the app must render to prove the fix.
+
+If a meaningful test cannot be added, say why. Do not pretend inspection is a
+regression test.
+
+## Anti-Hack Gates
+
+Stop and ask for confirmation when you catch yourself doing any of these:
+
+- Changing code before identifying the responsible codepath.
+- Adding special-case logic without naming the invariant it protects.
+- Introducing a new abstraction for one small issue.
+- Touching unrelated formatting or refactoring adjacent code.
+- Silencing an error without defining what the user or operator sees.
+- Skipping tests because the change "looks obvious" when a focused test exists.
+- Expanding the fix after tests fail without reclassifying the issue.
+
+## Report Format
+
+After all handled issues are done, report:
+
+```text
+QUICK FIX REPORT
+========================================
+Issue 1: DONE | NEEDS PLAN | NEEDS INVESTIGATION
+Classification: SIMPLE | NEEDS PLAN | NEEDS INVESTIGATION
+Cause: <one sentence>
+Change: <files and behavior changed>
+Verification: <commands run and result>
+Risk: <remaining concern or none>
+
+Issue 2: ...
+========================================
+Summary: <N fixed, M need confirmation, K skipped>
+```
+
+Keep the final user response concise, but include any verification that failed
+or could not be run.

@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-quick-fix"
+  short_description: "Handle small fixes with planning gates"
+  default_prompt: "Use $gl-quick-fix to handle these small issues, fixing simple ones and stopping for confirmation when tradeoffs appear."
+policy:
+  allow_implicit_invocation: true

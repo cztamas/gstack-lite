@@ -45,6 +45,7 @@ Generated plans, browser state, QA reports, design artifacts, and other writable
 - `gl-design-html`
 - `gl-design-review`
 - `gl-investigate`
+- `gl-quick-fix`
 - `gl-review`
 - `gl-cso`
 - `gl-browse`
