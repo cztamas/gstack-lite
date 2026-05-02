@@ -17,6 +17,9 @@ describe('skill generator', () => {
           const skillDir = path.join(outDir, `gl-${skill}`);
           const skillText = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
           expect(skillText).toContain('## Search Before Building');
+          expect(skillText).toContain('## Blocking User Question Protocol');
+          expect(skillText).toContain('make the question the final response for this turn and stop');
+          expect(skillText).toContain('Never inline a question and keep going');
           expect(skillText).toContain('## Completion Status Protocol');
           expect(skillText).not.toContain('{{LITE_PREAMBLE}}');
 
@@ -42,6 +45,8 @@ describe('skill generator', () => {
       expect(text).toContain('$HOME/.codex/skills/gl-office-hours/SKILL.md');
       expect(text).toContain('../gl-office-hours/SKILL.md');
       expect(text).not.toContain('$HOME/.gstack-lite/office-hours/SKILL.md');
+      expect(text).toContain('Blocking User Question');
+      expect(text).not.toMatch(/call user question/i);
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }

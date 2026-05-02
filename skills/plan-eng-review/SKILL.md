@@ -32,7 +32,19 @@ Lite paths:
 
 ## User Question Format
 
-When a skill tells you to ask the user, ask one concise question and include the decision context they need. Present options as A/B/C when that makes the tradeoff clearer.
+When a skill tells you to ask the user, ask a **Blocking User Question**. This is a gate, not narration.
+
+## Blocking User Question Protocol
+
+Use this protocol for every instruction that says to ask the user, wait for the user, get approval, confirm a choice, or stop for feedback.
+
+1. Prefer a host-provided user-input or question tool when one is explicitly available in the current tool list.
+2. If no such tool is available, make the question the final response for this turn and stop. Do not continue with planning, implementation, review sections, or guessed defaults in the same turn.
+3. Resume the skill only after the user answers. Interpret the answer, then continue from the instruction immediately after the gate.
+4. Never answer your own question. Never inline a question and keep going. Never build a plan from guessed answers when the workflow asked for user input.
+5. At a **STOP** point, stop immediately after asking the Blocking User Question unless the instruction explicitly says no question is needed.
+
+Write one concise question and include the decision context the user needs. Present options as A/B/C when that makes the tradeoff clearer.
 
 For option sets that differ in coverage, include:
 
@@ -148,7 +160,7 @@ If a design doc exists, read it. Use it as the source of truth for the problem s
 When the design doc check above prints "No design doc found," offer the prerequisite
 skill before proceeding.
 
-Say to the user by asking the user:
+Say to the user with a Blocking User Question:
 
 > "No design doc found for this branch. `/gl-office-hours` produces a structured problem
 > statement, premise challenge, and explored alternatives - it gives this review much
@@ -230,7 +242,7 @@ Before reviewing anything, answer these questions:
    - How will users download or install it (GitHub Releases, package manager, container registry)?
      If the plan defers distribution, flag it explicitly in the "NOT in scope" section - don't let it silently drop.
 
-If the complexity check triggers (8+ files or 2+ new classes/services), proactively recommend scope reduction by asking the user - explain what's overbuilt, propose a minimal version that achieves the core goal, and ask whether to reduce or proceed as-is. If the complexity check does not trigger, present your Step 0 findings and proceed directly to Section 1.
+If the complexity check triggers (8+ files or 2+ new classes/services), proactively recommend scope reduction with a Blocking User Question - explain what's overbuilt, propose a minimal version that achieves the core goal, and ask whether to reduce or proceed as-is. If the complexity check does not trigger, present your Step 0 findings and proceed directly to Section 1.
 
 Always work through the full interactive review: one section at a time (Architecture -> Code Quality -> Tests -> Performance) with at most 8 top issues per section.
 
@@ -253,7 +265,7 @@ Evaluate:
 - For each new codepath or integration point, describe one realistic production failure scenario and whether the plan accounts for it.
 - **Distribution architecture:** If this introduces a new artifact (binary, package, container), how does it get built, published, and updated? Is the CI/CD pipeline part of the plan or deferred?
 
-**STOP.** For each issue found in this section, call user question individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one user question. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** For each issue found in this section, ask a Blocking User Question individually. One issue per Blocking User Question. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one Blocking User Question. Only proceed to the next section after ALL issues in this section are resolved.
 
 ## Confidence Calibration
 
@@ -291,7 +303,7 @@ Evaluate:
 - Areas that are over-engineered or under-engineered relative to my preferences.
 - Existing ASCII diagrams in touched files - are they still accurate after this change?
 
-**STOP.** For each issue found in this section, call user question individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one user question. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** For each issue found in this section, ask a Blocking User Question individually. One issue per Blocking User Question. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one Blocking User Question. Only proceed to the next section after ALL issues in this section are resolved.
 
 ### 3. Test review
 
@@ -483,9 +495,9 @@ Repo: {owner/repo}
 
 This file is consumed by `/gl-qa` and `/gl-qa-only` as primary test input. Include only the information that helps a QA tester know **what to test and where** - not implementation details.
 
-For LLM/prompt changes: check the "Prompt/LLM changes" file patterns listed in CLAUDE.md. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then ask the user to confirm the eval scope with the user.
+For LLM/prompt changes: check the "Prompt/LLM changes" file patterns listed in CLAUDE.md. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then ask a Blocking User Question to confirm the eval scope with the user.
 
-**STOP.** For each issue found in this section, call user question individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one user question. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** For each issue found in this section, ask a Blocking User Question individually. One issue per Blocking User Question. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one Blocking User Question. Only proceed to the next section after ALL issues in this section are resolved.
 
 ### 4. Performance review
 
@@ -496,13 +508,13 @@ Evaluate:
 - Caching opportunities.
 - Slow or high-complexity code paths.
 
-**STOP.** For each issue found in this section, call user question individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one user question. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP.** For each issue found in this section, ask a Blocking User Question individually. One issue per Blocking User Question. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one Blocking User Question. Only proceed to the next section after ALL issues in this section are resolved.
 
 ## CRITICAL RULE - How to ask questions
 
-Follow the user question format from the Preamble above. Additional rules for plan reviews:
+Follow the User Question Format from the Preamble above. Additional rules for plan reviews:
 
-- **One issue = one user question call.** Never combine multiple issues into one question.
+- **One issue = one Blocking User Question call.** Never combine multiple issues into one question.
 - Describe the problem concretely, with file and line references.
 - Present 2-3 options, including "do nothing" where that's reasonable.
 - For each option, specify in one line: effort (human: ~X / CC: ~Y), risk, and maintenance burden. If the complete option is only marginally more effort than the shortcut with CC, recommend the complete option.

@@ -61,6 +61,13 @@ const forbiddenPatterns = [
   /Review Readiness Dashboard step above/,
   /Parse each JSONL entry/,
   /\b(?:codex-review|plan-devex-review|devex-review)\b/,
+  /by asking the user/i,
+  /call user question/i,
+  /user question as a tool_use/i,
+  /ask the user to wait for the user/i,
+  /gates by asking the user/i,
+  /using the preamble's User Question Format section/i,
+  /Follow the user question format/,
   /\bgstack-(?:update-check|config|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)\b/,
   /\bGBrain\b/,
   /\bSupabase\b/,
@@ -107,6 +114,7 @@ const browserScanRoots = [
 
 const requiredPreambleSections = [
   'User Question Format',
+  'Blocking User Question Protocol',
   'Completeness Principle - Boil the Lake',
   'Search Before Building',
   'Completion Status Protocol',
@@ -118,6 +126,10 @@ const referencedSectionPatterns = [
   {
     heading: 'User Question Format',
     patterns: [/User Question Format section/, /user question format from the Preamble/i],
+  },
+  {
+    heading: 'Blocking User Question Protocol',
+    patterns: [/Blocking User Question/, /stop for feedback/i, /wait for the user/i],
   },
   {
     heading: 'Completeness Principle - Boil the Lake',

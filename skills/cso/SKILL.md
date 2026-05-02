@@ -31,7 +31,19 @@ Lite paths:
 
 ## User Question Format
 
-When a skill tells you to ask the user, ask one concise question and include the decision context they need. Present options as A/B/C when that makes the tradeoff clearer.
+When a skill tells you to ask the user, ask a **Blocking User Question**. This is a gate, not narration.
+
+## Blocking User Question Protocol
+
+Use this protocol for every instruction that says to ask the user, wait for the user, get approval, confirm a choice, or stop for feedback.
+
+1. Prefer a host-provided user-input or question tool when one is explicitly available in the current tool list.
+2. If no such tool is available, make the question the final response for this turn and stop. Do not continue with planning, implementation, review sections, or guessed defaults in the same turn.
+3. Resume the skill only after the user answers. Interpret the answer, then continue from the instruction immediately after the gate.
+4. Never answer your own question. Never inline a question and keep going. Never build a plan from guessed answers when the workflow asked for user input.
+5. At a **STOP** point, stop immediately after asking the Blocking User Question unless the instruction explicitly says no question is needed.
+
+Write one concise question and include the decision context the user needs. Present options as A/B/C when that makes the tradeoff clearer.
 
 For option sets that differ in coverage, include:
 
@@ -611,7 +623,7 @@ Match findings across reports using the `fingerprint` field (sha256 of category 
 
 **Protection file check:** Check if the project has a `.gitleaks.toml` or `.secretlintrc`. If none exists, recommend creating one.
 
-**Remediation Roadmap:** For the top 5 findings, present by asking the user:
+**Remediation Roadmap:** For the top 5 findings, present as a Blocking User Question:
 1. Context: The vulnerability, its severity, exploitation scenario
 2. RECOMMENDATION: Choose [X] because [reason]
 3. Options:

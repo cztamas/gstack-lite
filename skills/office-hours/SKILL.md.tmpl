@@ -114,7 +114,7 @@ These examples show the difference between soft exploration and rigorous diagnos
 
 ### The Six Forcing Questions
 
-Ask these questions **ONE AT A TIME** by asking the user. Push on each one until the answer is specific, evidence-based, and uncomfortable. Comfort means the founder hasn't gone deep enough.
+Ask these questions **ONE AT A TIME** with Blocking User Questions. Push on each one until the answer is specific, evidence-based, and uncomfortable. Comfort means the founder hasn't gone deep enough.
 
 **Smart routing based on product stage - you don't always need all six:**
 - Pre-product -> Q1, Q2, Q3
@@ -234,7 +234,7 @@ Both are outcome-framed. Only one has the 'whoa.' Builder mode's job is to surfa
 
 ### Questions (generative, not interrogative)
 
-Ask these **ONE AT A TIME** by asking the user. The goal is to brainstorm and sharpen the idea, not interrogate.
+Ask these **ONE AT A TIME** with Blocking User Questions. The goal is to brainstorm and sharpen the idea, not interrogate.
 
 - **What's the coolest version of this?** What would make it genuinely delightful?
 - **Who would you show this to?** What would make them say "whoa"?
@@ -264,7 +264,7 @@ grep -li "<keyword1>\|<keyword2>\|<keyword3>" $GSTACK_LITE_STATE_DIR/*-design-*.
 
 If matches found, read the matching design docs and surface them:
 - "FYI: Related design found - '{title}' by {user} on {date} (branch: {branch}). Key overlap: {1-line summary of relevant section}."
-- Ask by asking the user: "Should we build on this prior design or start fresh?"
+- Ask with a Blocking User Question: "Should we build on this prior design or start fresh?"
 
 This enables repo-level discovery. Multiple users will see each other's design docs when `.gstack-lite/` is shared, and can keep it local by ignoring that directory.
 
@@ -361,7 +361,7 @@ Rules:
 
 **RECOMMENDATION:** Choose [X] because [one-line reason].
 
-Present by asking the user. Do NOT proceed without user approval of the approach.
+Present as a Blocking User Question. Do NOT proceed without user approval of the approach.
 
 ---
 
@@ -732,7 +732,7 @@ After the loop completes (PASS, max iterations, or convergence guard):
 
 ---
 
-Present the reviewed design doc to the user by asking the user:
+Present the reviewed design doc to the user with a Blocking User Question:
 - A) Approve - mark Status: APPROVED and proceed to handoff
 - B) Revise - specify which sections need changes (loop back to revise those sections)
 - C) Start over - return to Phase 2
@@ -796,7 +796,7 @@ Use the founder signal count from Phase 4.5 to select the right sub-tier.
 >
 > GStack thinks you are among the top people who could do this.
 
-Then ask the user: "Would you consider applying to Y Combinator?"
+Then ask a Blocking User Question: "Would you consider applying to Y Combinator?"
 - If yes: run `open https://ycombinator.com/apply?ref=gstack` and say: "Bring this design doc to your YC interview. It's better than most pitch decks."
 - If no: respond warmly: "Totally fair. The design doc is yours either way, and the offer stands if you ever change your mind." No pressure, no guilt, no re-ask.
 
@@ -964,7 +964,7 @@ The design doc at `$GSTACK_LITE_STATE_DIR/` is automatically discoverable by dow
 ## Important Rules
 
 - **Never start implementation.** This skill produces design docs, not code. Not even scaffolding.
-- **Questions ONE AT A TIME.** Never batch multiple questions into one user question.
+- **Questions ONE AT A TIME.** Never batch multiple questions into one Blocking User Question.
 - **The assignment is mandatory.** Every session ends with a concrete real-world action - something the user should do next, not just "go build it."
 - **If user provides a fully formed plan:** skip Phase 2 (questioning) but still run Phase 3 (Premise Challenge) and Phase 4 (Alternatives). Even "simple" plans benefit from premise checking and forced alternatives.
 - **Completion status:**

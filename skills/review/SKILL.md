@@ -28,7 +28,19 @@ Lite paths:
 
 ## User Question Format
 
-When a skill tells you to ask the user, ask one concise question and include the decision context they need. Present options as A/B/C when that makes the tradeoff clearer.
+When a skill tells you to ask the user, ask a **Blocking User Question**. This is a gate, not narration.
+
+## Blocking User Question Protocol
+
+Use this protocol for every instruction that says to ask the user, wait for the user, get approval, confirm a choice, or stop for feedback.
+
+1. Prefer a host-provided user-input or question tool when one is explicitly available in the current tool list.
+2. If no such tool is available, make the question the final response for this turn and stop. Do not continue with planning, implementation, review sections, or guessed defaults in the same turn.
+3. Resume the skill only after the user answers. Interpret the answer, then continue from the instruction immediately after the gate.
+4. Never answer your own question. Never inline a question and keep going. Never build a plan from guessed answers when the workflow asked for user input.
+5. At a **STOP** point, stop immediately after asking the Blocking User Question unless the instruction explicitly says no question is needed.
+
+Write one concise question and include the decision context the user needs. Present options as A/B/C when that makes the tradeoff clearer.
 
 For option sets that differ in coverage, include:
 
@@ -264,7 +276,7 @@ The plan completion results augment the existing Scope Drift Detection. If a pla
   - Show the investigation findings
   - Options: A) Stop and implement missing items, B) Ship anyway + create P1 TODOs, C) Intentionally dropped
 
-This is **INFORMATIONAL** unless HIGH-impact discrepancies are found (then it gates by asking the user).
+This is **INFORMATIONAL** unless HIGH-impact discrepancies are found (then it gates with a Blocking User Question).
 
 Update the scope drift output to include plan file context:
 
@@ -699,7 +711,7 @@ Before replying to any comment, run the **Escalation Detection** algorithm from 
 
 1. **VALID & ACTIONABLE comments:** These are included in your findings - they follow the Fix-First flow (auto-fixed if mechanical, batched into ASK if not) (A: Fix it now, B: Acknowledge, C: False positive). If the user chooses A (fix), reply using the **Fix reply template** from greptile-triage.md (include inline diff + explanation). If the user chooses C (false positive), reply using the **False Positive reply template** (include evidence + suggested re-rank), save to both per-project and global greptile-history.
 
-2. **FALSE POSITIVE comments:** Present each one by asking the user:
+2. **FALSE POSITIVE comments:** Present each one with a Blocking User Question:
    - Show the Greptile comment: file:line (or [top-level]) + body summary + permalink URL
    - Explain concisely why it's a false positive
    - Options:

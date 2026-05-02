@@ -31,7 +31,19 @@ Lite paths:
 
 ## User Question Format
 
-When a skill tells you to ask the user, ask one concise question and include the decision context they need. Present options as A/B/C when that makes the tradeoff clearer.
+When a skill tells you to ask the user, ask a **Blocking User Question**. This is a gate, not narration.
+
+## Blocking User Question Protocol
+
+Use this protocol for every instruction that says to ask the user, wait for the user, get approval, confirm a choice, or stop for feedback.
+
+1. Prefer a host-provided user-input or question tool when one is explicitly available in the current tool list.
+2. If no such tool is available, make the question the final response for this turn and stop. Do not continue with planning, implementation, review sections, or guessed defaults in the same turn.
+3. Resume the skill only after the user answers. Interpret the answer, then continue from the instruction immediately after the gate.
+4. Never answer your own question. Never inline a question and keep going. Never build a plan from guessed answers when the workflow asked for user input.
+5. At a **STOP** point, stop immediately after asking the Blocking User Question unless the instruction explicitly says no question is needed.
+
+Write one concise question and include the decision context the user needs. Present options as A/B/C when that makes the tradeoff clearer.
 
 For option sets that differ in coverage, include:
 
@@ -408,7 +420,7 @@ for the board URL and for reloading during regeneration cycles.
 
 **PRIMARY WAIT: user question with board URL**
 
-After the board is serving, ask the user to wait for the user. Include the
+After the board is serving, ask a Blocking User Question that tells the user the board is open and waits for them to finish. Include the
 board URL so they can click it if they lost the browser tab:
 
 "I've opened a comparison board with the design variants:
@@ -418,7 +430,7 @@ submitted your feedback (or paste your preferences here). If you clicked
 Regenerate or Remix on the board, tell me and I'll generate new variants."
 
 **Do NOT ask the user to ask which variant the user prefers.** The comparison
-board IS the chooser. user question is just the blocking wait mechanism.
+board IS the chooser. The Blocking User Question is just the wait mechanism.
 
 **After the user responds to Ask the user:**
 
@@ -537,7 +549,7 @@ descriptions of what 10/10 looks like.
 ### Pass 1: Information Architecture
 Rate 0-10: Does the plan define what the user sees first, second, third?
 FIX TO 10: Add information hierarchy to the plan. Include ASCII diagram of screen/page structure and navigation flow. Apply "constraint worship" - if you can only show 3 things, which 3?
-**STOP.** user question once per issue. Do NOT batch. Recommend + WHY. If no issues, say so and move on. Do NOT proceed until user responds.
+**STOP.** Blocking User Question once per issue. Do NOT batch. Recommend + WHY. If no issues, say so and move on. If there is an issue, do NOT proceed until the user responds.
 
 ### Pass 2: Interaction State Coverage
 Rate 0-10: Does the plan specify loading, empty, error, success, partial states?
@@ -549,7 +561,7 @@ FIX TO 10: Add interaction state table to the plan:
 ```
 For each state: describe what the user SEES, not backend behavior.
 Empty states are features - specify warmth, primary action, context.
-**STOP.** user question once per issue. Do NOT batch. Recommend + WHY.
+**STOP.** Blocking User Question once per issue. Do NOT batch. Recommend + WHY.
 
 ### Pass 3: User Journey & Emotional Arc
 Rate 0-10: Does the plan consider the user's emotional experience?
@@ -561,7 +573,7 @@ FIX TO 10: Add user journey storyboard:
   ...
 ```
 Apply time-horizon design: 5-sec visceral, 5-min behavioral, 5-year reflective.
-**STOP.** user question once per issue. Do NOT batch. Recommend + WHY.
+**STOP.** Blocking User Question once per issue. Do NOT batch. Recommend + WHY.
 
 ### Pass 4: AI Slop Risk
 Rate 0-10: Does the plan describe specific, intentional UI - or generic patterns?
@@ -645,18 +657,18 @@ Source: [OpenAI "Designing Delightful Frontends with GPT-5.4"](https://developer
 - "Clean, modern UI" -> meaningless. Replace with actual design decisions.
 - "Dashboard with widgets" -> what makes this NOT every other dashboard?
 If visual mockups were generated in Step 0.5, evaluate them against the AI slop blacklist above. Read each mockup image using the Read tool. Does the mockup fall into generic patterns (3-column grid, centered hero, stock-photo feel)? If so, flag it and offer to regenerate with more specific direction via `$D iterate --feedback "..."`.
-**STOP.** user question once per issue. Do NOT batch. Recommend + WHY.
+**STOP.** Blocking User Question once per issue. Do NOT batch. Recommend + WHY.
 
 ### Pass 5: Design System Alignment
 Rate 0-10: Does the plan align with DESIGN.md?
 FIX TO 10: If DESIGN.md exists, annotate with specific tokens/components. If no DESIGN.md, flag the gap and recommend `/gl-design-consultation`.
 Flag any new component - does it fit the existing vocabulary?
-**STOP.** user question once per issue. Do NOT batch. Recommend + WHY.
+**STOP.** Blocking User Question once per issue. Do NOT batch. Recommend + WHY.
 
 ### Pass 6: Responsive & Accessibility
 Rate 0-10: Does the plan specify mobile/tablet, keyboard nav, screen readers?
 FIX TO 10: Add responsive specs per viewport - not "stacked on mobile" but intentional layout changes. Add a11y: keyboard nav patterns, ARIA landmarks, touch target sizes (44px min), color contrast requirements.
-**STOP.** user question once per issue. Do NOT batch. Recommend + WHY.
+**STOP.** Blocking User Question once per issue. Do NOT batch. Recommend + WHY.
 
 ### Pass 7: Unresolved Design Decisions
 Surface ambiguities that will haunt implementation:
@@ -668,7 +680,7 @@ Surface ambiguities that will haunt implementation:
   ...
 ```
 If visual mockups were generated in Step 0.5, reference them as evidence when surfacing unresolved decisions. A mockup makes decisions concrete - e.g., "Your approved mockup shows a sidebar nav, but the plan doesn't specify mobile behavior. What happens to this sidebar on 375px?"
-Each decision = one user question with recommendation + WHY + alternatives. Edit the plan with each decision as it's made.
+Each decision = one Blocking User Question with recommendation + WHY + alternatives. Edit the plan with each decision as it's made.
 
 ### Post-Pass: Update Mockups (if generated)
 
@@ -679,14 +691,14 @@ Ask the user: "The review passes changed [list major design changes]. Want me to
 If yes, use `$D iterate` with feedback summarizing the changes, or `$D variants` with an updated brief. Save to the same `$_DESIGN_DIR` directory.
 
 ## CRITICAL RULE - How to ask questions
-Follow the user question format from the Preamble above. Additional rules for plan design reviews:
-* **One issue = one user question call.** Never combine multiple issues into one question.
+Follow the User Question Format from the Preamble above. Additional rules for plan design reviews:
+* **One issue = one Blocking User Question call.** Never combine multiple issues into one question.
 * Describe the design gap concretely - what's missing, what the user will experience if it's not specified.
 * Present 2-3 options. For each: effort to specify now, risk if deferred.
 * **Map to Design Principles above.** One sentence connecting your recommendation to a specific principle.
 * Label with issue NUMBER + option LETTER (e.g., "3A", "3B").
 * **Escape hatch (tightened):** If a section has zero findings, state "No issues, moving on" and proceed. If it has findings, use user question for each - a gap with an "obvious fix" is still a gap and still needs user approval before any change lands in the plan. Only skip user question when the fix is genuinely trivial AND there are no meaningful design alternatives. When in doubt, ask.
-* **NEVER ask the user to ask which variant the user prefers.** Always create a comparison board first (`$D compare --serve`) and open it in the browser. The board has rating controls, comments, remix/regenerate buttons, and structured feedback output. Use user question ONLY to notify the user the board is open and wait for them to finish - not to present variants inline and ask "which do you prefer?" That is a degraded experience.
+* **NEVER ask which variant the user prefers.** Always create a comparison board first (`$D compare --serve`) and open it in the browser. The board has rating controls, comments, remix/regenerate buttons, and structured feedback output. Use Blocking User Question ONLY to notify the user the board is open and wait for them to finish - not to present variants inline and ask "which do you prefer?" That is a degraded experience.
 
 ## Required Outputs
 

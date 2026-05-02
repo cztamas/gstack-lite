@@ -30,7 +30,19 @@ Lite paths:
 
 ## User Question Format
 
-When a skill tells you to ask the user, ask one concise question and include the decision context they need. Present options as A/B/C when that makes the tradeoff clearer.
+When a skill tells you to ask the user, ask a **Blocking User Question**. This is a gate, not narration.
+
+## Blocking User Question Protocol
+
+Use this protocol for every instruction that says to ask the user, wait for the user, get approval, confirm a choice, or stop for feedback.
+
+1. Prefer a host-provided user-input or question tool when one is explicitly available in the current tool list.
+2. If no such tool is available, make the question the final response for this turn and stop. Do not continue with planning, implementation, review sections, or guessed defaults in the same turn.
+3. Resume the skill only after the user answers. Interpret the answer, then continue from the instruction immediately after the gate.
+4. Never answer your own question. Never inline a question and keep going. Never build a plan from guessed answers when the workflow asked for user input.
+5. At a **STOP** point, stop immediately after asking the Blocking User Question unless the instruction explicitly says no question is needed.
+
+Write one concise question and include the decision context the user needs. Present options as A/B/C when that makes the tradeoff clearer.
 
 For option sets that differ in coverage, include:
 
@@ -505,7 +517,7 @@ for the board URL and for reloading during regeneration cycles.
 
 **PRIMARY WAIT: user question with board URL**
 
-After the board is serving, ask the user to wait for the user. Include the
+After the board is serving, ask a Blocking User Question that tells the user the board is open and waits for them to finish. Include the
 board URL so they can click it if they lost the browser tab:
 
 "I've opened a comparison board with the design variants:
@@ -515,7 +527,7 @@ submitted your feedback (or paste your preferences here). If you clicked
 Regenerate or Remix on the board, tell me and I'll generate new variants."
 
 **Do NOT ask the user to ask which variant the user prefers.** The comparison
-board IS the chooser. user question is just the blocking wait mechanism.
+board IS the chooser. The Blocking User Question is just the wait mechanism.
 
 **After the user responds to Ask the user:**
 
@@ -613,7 +625,7 @@ Write `approved.json` to `$_DESIGN_DIR/` (handled by the loop above).
 If invoked from another skill: return the structured feedback for that skill to consume.
 The calling skill reads `approved.json` and the approved variant PNG.
 
-If standalone, offer next steps by asking the user:
+If standalone, offer next steps with a Blocking User Question:
 
 > "Design direction locked in. What's next?
 > A) Iterate more - refine the approved variant with specific feedback

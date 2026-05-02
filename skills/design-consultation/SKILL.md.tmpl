@@ -394,7 +394,7 @@ for the board URL and for reloading during regeneration cycles.
 
 **PRIMARY WAIT: user question with board URL**
 
-After the board is serving, ask the user to wait for the user. Include the
+After the board is serving, ask a Blocking User Question that tells the user the board is open and waits for them to finish. Include the
 board URL so they can click it if they lost the browser tab:
 
 "I've opened a comparison board with the design variants:
@@ -404,7 +404,7 @@ submitted your feedback (or paste your preferences here). If you clicked
 Regenerate or Remix on the board, tell me and I'll generate new variants."
 
 **Do NOT ask the user to ask which variant the user prefers.** The comparison
-board IS the chooser. user question is just the blocking wait mechanism.
+board IS the chooser. The Blocking User Question is just the wait mechanism.
 
 **After the user responds to Ask the user:**
 
