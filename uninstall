@@ -15,7 +15,7 @@ Usage:
   ./uninstall --all
   ./uninstall --all --state
 
-Removes only gl-* skill symlinks from selected host skill directories.
+Removes only gl-* gstack-lite skill entries from selected host skill directories.
 Use --state to also remove the installed runtime directory at $HOME/.gstack-lite.
 Repo-local .gstack-lite project state is left alone.
 USAGE
@@ -71,6 +71,25 @@ host_skill_dir() {
   esac
 }
 
+remove_managed_link() {
+  local target="$1"
+  local expected="$2"
+  [ -e "$target" ] || [ -L "$target" ] || return 0
+  if [ ! -L "$target" ]; then
+    echo "  warning: $target is not a symlink; leaving it untouched" >&2
+    return 1
+  fi
+
+  local current
+  current="$(readlink "$target" 2>/dev/null || true)"
+  if [ "$current" != "$expected" ]; then
+    echo "  warning: $target points to $current, not $expected; leaving it untouched" >&2
+    return 1
+  fi
+
+  rm -f "$target"
+}
+
 uninstall_host() {
   local host="$1"
   local skills_dir
@@ -93,12 +112,25 @@ uninstall_host() {
       fi
       rm -f "$target"
       removed=$((removed + 1))
+    elif [ -d "$target" ]; then
+      local blocked=0
+      remove_managed_link "$target/SKILL.md" "$skill_dir/SKILL.md" || blocked=1
+      remove_managed_link "$target/ETHOS.md" "$ROOT/ETHOS.md" || blocked=1
+      if [ -d "$skill_dir/agents" ]; then
+        remove_managed_link "$target/agents" "$skill_dir/agents" || blocked=1
+      fi
+
+      if [ "$blocked" -eq 0 ] && rmdir "$target" 2>/dev/null; then
+        removed=$((removed + 1))
+      else
+        echo "  warning: $target is not empty or contains unmanaged files; leaving directory in place" >&2
+      fi
     else
       echo "  warning: $target is not a symlink; leaving it untouched" >&2
     fi
   done
 
-  echo "gstack-lite removed ($host): $removed skill link(s)"
+  echo "gstack-lite removed ($host): $removed skill entr$( [ "$removed" -eq 1 ] && printf 'y' || printf 'ies' )"
 }
 
 for host in "${HOSTS[@]}"; do

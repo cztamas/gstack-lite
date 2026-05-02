@@ -14,7 +14,7 @@ Usage:
   ./install --host cursor
   ./install --all
 
-Installs namespaced gstack-lite skills as symlinks:
+Installs namespaced gstack-lite skill directories:
   gl-office-hours, gl-review, ...
 
 The installer only writes to the selected host skill directory and
@@ -88,6 +88,19 @@ link_dir() {
   fi
 }
 
+link_file() {
+  local src="$1"
+  local dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  if [ -L "$dst" ]; then
+    ln -sfn "$src" "$dst"
+  elif [ ! -e "$dst" ]; then
+    ln -sfn "$src" "$dst"
+  else
+    echo "  warning: $dst already exists and is not a symlink; leaving it untouched" >&2
+  fi
+}
+
 install_runtime() {
   mkdir -p "$RUNTIME_DIR"
 
@@ -106,6 +119,36 @@ install_runtime() {
   done
 }
 
+install_host_skill() {
+  local skill_dir="$1"
+  local dst="$2"
+  mkdir -p "$(dirname "$dst")"
+
+  if [ -L "$dst" ]; then
+    local current
+    current="$(readlink "$dst" 2>/dev/null || true)"
+    case "$current" in
+      "$skill_dir"|"$ROOT"/skills/*)
+        rm -f "$dst"
+        ;;
+      *)
+        echo "  warning: $dst already exists as a symlink to $current; leaving it untouched" >&2
+        return 0
+        ;;
+    esac
+  elif [ -e "$dst" ] && [ ! -d "$dst" ]; then
+    echo "  warning: $dst already exists and is not a directory; leaving it untouched" >&2
+    return 0
+  fi
+
+  mkdir -p "$dst"
+  link_file "$skill_dir/SKILL.md" "$dst/SKILL.md"
+  link_file "$ROOT/ETHOS.md" "$dst/ETHOS.md"
+  if [ -d "$skill_dir/agents" ]; then
+    link_dir "$skill_dir/agents" "$dst/agents"
+  fi
+}
+
 install_host() {
   local host="$1"
   local skills_dir
@@ -118,7 +161,7 @@ install_host() {
     local skill
     skill="$(basename "$skill_dir")"
     local name="gl-$skill"
-    link_dir "$skill_dir" "$skills_dir/$name"
+    install_host_skill "$skill_dir" "$skills_dir/$name"
     linked+=("$name")
   done
 

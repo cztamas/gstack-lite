@@ -20,7 +20,7 @@ Other hosts:
 ./install --all
 ```
 
-The installer creates namespaced skill symlinks such as `gl-review` and `gl-qa`, then links shared runtime assets into `$HOME/.gstack-lite` and skill mirrors into `$HOME/.gstack-lite/skills`.
+The installer creates namespaced skill directories such as `gl-review` and `gl-qa` in the selected host. Each directory contains symlinks to `SKILL.md`, `agents/` metadata when present, and `ETHOS.md`. Shared runtime assets are linked into `$HOME/.gstack-lite`, with skill mirrors in `$HOME/.gstack-lite/skills`.
 
 Generated plans, browser state, QA reports, design artifacts, and other writable state default to the active repository's `.gstack-lite/` directory. Add `.gstack-lite/` to that repository's `.gitignore` for local-only state, or commit selected files when the state should be shared with the repo.
 
