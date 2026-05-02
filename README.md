@@ -20,7 +20,7 @@ Other hosts:
 ./install --all
 ```
 
-The installer creates namespaced skill directories such as `gl-review` and `gl-qa` in the selected host. Each directory contains symlinks to `SKILL.md`, `agents/` metadata when present, and `ETHOS.md`. Shared runtime assets are linked into `$HOME/.gstack-lite`, with skill mirrors in `$HOME/.gstack-lite/skills`.
+The installer generates host-specific skill directories under `$HOME/.gstack-lite/generated/<host>/`, then creates namespaced skill directories such as `gl-review` and `gl-qa` in the selected host. Each installed directory contains symlinks to the generated `SKILL.md`, `agents/` metadata when present, and `ETHOS.md`. Shared runtime assets are linked into `$HOME/.gstack-lite`.
 
 Generated plans, browser state, QA reports, design artifacts, and other writable state default to the active repository's `.gstack-lite/` directory. Add `.gstack-lite/` to that repository's `.gitignore` for local-only state, or commit selected files when the state should be shared with the repo.
 
@@ -85,15 +85,16 @@ If a runtime is missing, the relevant skills should fall back to host-native bro
 
 ## Development
 
-Import the scoped skills from a full gstack checkout:
+Skill source lives in `skills/*/SKILL.md.tmpl`. The generator expands lite placeholders such as `{{LITE_PREAMBLE}}` and writes the checked-in `SKILL.md` files:
 
 ```bash
-node tools/import-from-gstack.mjs --source ../gstack
+npm run generate:skills
 ```
 
-Validate the lite package:
+Validate and test the lite package:
 
 ```bash
+npm run validate
 npm test
 npm run browser:check
 ```

@@ -109,14 +109,24 @@ install_runtime() {
       link_dir "$ROOT/$asset" "$RUNTIME_DIR/$asset"
     fi
   done
+}
 
-  mkdir -p "$RUNTIME_DIR/skills"
-  for skill_dir in "$ROOT"/skills/*; do
-    [ -f "$skill_dir/SKILL.md" ] || continue
-    local skill
-    skill="$(basename "$skill_dir")"
-    link_dir "$skill_dir" "$RUNTIME_DIR/skills/$skill"
-  done
+generate_host_skills() {
+  local host="$1"
+  local generated_root="$RUNTIME_DIR/generated"
+  local out="$generated_root/$host"
+  local tmp="$generated_root/.tmp-$host-$$"
+
+  command -v node >/dev/null 2>&1 || {
+    echo "node is required to generate gstack-lite skills" >&2
+    exit 1
+  }
+
+  mkdir -p "$generated_root"
+  rm -rf "$tmp"
+  node "$ROOT/tools/generate-skills.mjs" --host "$host" --out "$tmp" >/dev/null
+  rm -rf "$out"
+  mv "$tmp" "$out"
 }
 
 install_host_skill() {
@@ -128,7 +138,7 @@ install_host_skill() {
     local current
     current="$(readlink "$dst" 2>/dev/null || true)"
     case "$current" in
-      "$skill_dir"|"$ROOT"/skills/*)
+      "$skill_dir"|"$ROOT"/skills/*|"$RUNTIME_DIR"/generated/*/gl-*)
         rm -f "$dst"
         ;;
       *)
@@ -143,7 +153,7 @@ install_host_skill() {
 
   mkdir -p "$dst"
   link_file "$skill_dir/SKILL.md" "$dst/SKILL.md"
-  link_file "$ROOT/ETHOS.md" "$dst/ETHOS.md"
+  link_file "$skill_dir/ETHOS.md" "$dst/ETHOS.md"
   if [ -d "$skill_dir/agents" ]; then
     link_dir "$skill_dir/agents" "$dst/agents"
   fi
@@ -154,19 +164,22 @@ install_host() {
   local skills_dir
   skills_dir="$(host_skill_dir "$host")"
   mkdir -p "$skills_dir"
+  generate_host_skills "$host"
+
+  local generated_dir="$RUNTIME_DIR/generated/$host"
 
   local linked=()
-  for skill_dir in "$ROOT"/skills/*; do
+  for skill_dir in "$generated_dir"/gl-*; do
     [ -f "$skill_dir/SKILL.md" ] || continue
-    local skill
-    skill="$(basename "$skill_dir")"
-    local name="gl-$skill"
+    local name
+    name="$(basename "$skill_dir")"
     install_host_skill "$skill_dir" "$skills_dir/$name"
     linked+=("$name")
   done
 
   echo "gstack-lite ready ($host)"
   echo "  skills: $skills_dir"
+  echo "  generated: $generated_dir"
   echo "  runtime: $RUNTIME_DIR"
   echo "  commands: ${linked[*]}"
 }

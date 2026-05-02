@@ -1,50 +1,30 @@
 #!/usr/bin/env node
-import { readdir, readFile, stat } from 'node:fs/promises';
+import {
+  lstat,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+} from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  expectedSkills,
+  expectedSkillsSorted,
+  hosts,
+  liteSkillCommands,
+} from './skill-generator/config.mjs';
+import {
+  defaultRepoRoot,
+  discoverTemplateSkills,
+  generateSkills,
+  renderSkill,
+} from './skill-generator/generate.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
-
-const expectedSkills = [
-  'office-hours',
-  'plan-ceo-review',
-  'plan-eng-review',
-  'plan-design-review',
-  'design-consultation',
-  'design-shotgun',
-  'design-html',
-  'design-review',
-  'investigate',
-  'quick-fix',
-  'review',
-  'cso',
-  'browse',
-  'qa',
-  'qa-only',
-  'freeze',
-  'unfreeze',
-].sort();
-
-const liteSkillCommands = [
-  'office-hours',
-  'plan-ceo-review',
-  'plan-eng-review',
-  'plan-design-review',
-  'design-consultation',
-  'design-shotgun',
-  'design-html',
-  'design-review',
-  'investigate',
-  'quick-fix',
-  'review',
-  'cso',
-  'browse',
-  'qa-only',
-  'qa',
-  'freeze',
-  'unfreeze',
-];
 
 const unprefixedLiteSkillCommand = new RegExp(`(^|[\\s(\\[{"'\`])/(?:${liteSkillCommands.join('|')})\\b`);
 
@@ -60,6 +40,7 @@ const forbiddenPatterns = [
   /projects\/\$SLUG/,
   /projects\/\{slug\}/,
   /\$HOME\/\.gstack-lite\/analytics/,
+  /\$HOME\/\.gstack-lite\/[^/\s`]+\/SKILL\.md/,
   /\bslug-cache\b/,
   /\bCLAUDE_PLUGIN_DATA\b/,
   /\bspec-review\.jsonl\b/,
@@ -77,6 +58,9 @@ const forbiddenPatterns = [
   /\bbuilder-profile\.jsonl\b/,
   /\bskill-usage\.jsonl\b/,
   /analytics\/skill-usage/,
+  /Review Readiness Dashboard step above/,
+  /Parse each JSONL entry/,
+  /\b(?:codex-review|plan-devex-review|devex-review)\b/,
   /\bgstack-(?:update-check|config|telemetry-log|timeline-log|learnings-(?:search|log)|question-(?:preference|log)|review-(?:log|read)|taste-update|builder-profile|specialist-stats|brain|gbrain)\b/,
   /\bGBrain\b/,
   /\bSupabase\b/,
@@ -91,7 +75,18 @@ const forbiddenPatterns = [
   unprefixedLiteSkillCommand,
 ];
 
-const scanRoots = [
+const browserForbiddenPatterns = [
+  /\bfind-browse\b/,
+  /\$B\b/,
+  /\bB=""/,
+  /\bbrowse\/dist\/browse\b/,
+  /\bgstack-browse\b/,
+  /\bGSTACK_BROWSER_(?:PROVIDER|BIN)\b/,
+  /\bBROWSE_NOT_AVAILABLE\b/,
+  /\bbrowse binary\b/i,
+];
+
+const sourceScanRoots = [
   'skills',
   'bin',
   'browse/bin',
@@ -110,15 +105,40 @@ const browserScanRoots = [
   'package-lock.json',
 ];
 
-const browserForbiddenPatterns = [
-  /\bfind-browse\b/,
-  /\$B\b/,
-  /\bB=""/,
-  /\bbrowse\/dist\/browse\b/,
-  /\bgstack-browse\b/,
-  /\bGSTACK_BROWSER_(?:PROVIDER|BIN)\b/,
-  /\bBROWSE_NOT_AVAILABLE\b/,
-  /\bbrowse binary\b/i,
+const requiredPreambleSections = [
+  'User Question Format',
+  'Completeness Principle - Boil the Lake',
+  'Search Before Building',
+  'Completion Status Protocol',
+  'Review Readiness Dashboard',
+  'Plan File Review Report',
+];
+
+const referencedSectionPatterns = [
+  {
+    heading: 'User Question Format',
+    patterns: [/User Question Format section/, /user question format from the Preamble/i],
+  },
+  {
+    heading: 'Completeness Principle - Boil the Lake',
+    patterns: [/Completeness Principle - Boil the Lake/],
+  },
+  {
+    heading: 'Search Before Building',
+    patterns: [/Search Before Building section/, /Search Before Building framework/],
+  },
+  {
+    heading: 'Completion Status Protocol',
+    patterns: [/Completion Status Protocol/],
+  },
+  {
+    heading: 'Review Readiness Dashboard',
+    patterns: [/Review Readiness Dashboard/],
+  },
+  {
+    heading: 'Plan File Review Report',
+    patterns: [/Plan File Review Report/],
+  },
 ];
 
 async function exists(filePath) {
@@ -130,18 +150,21 @@ async function exists(filePath) {
   }
 }
 
-async function walk(entry, out = []) {
-  const full = path.join(repoRoot, entry);
-  if (!(await exists(full))) return out;
-  const info = await stat(full);
+async function walkFiles(rootPath, out = []) {
+  if (!(await exists(rootPath))) return out;
+  const info = await stat(rootPath);
   if (info.isFile()) {
-    out.push(entry);
+    out.push(rootPath);
     return out;
   }
-  for (const child of await readdir(full)) {
-    await walk(path.join(entry, child), out);
+  for (const child of await readdir(rootPath)) {
+    await walkFiles(path.join(rootPath, child), out);
   }
   return out;
+}
+
+function rel(filePath) {
+  return path.relative(repoRoot, filePath) || filePath;
 }
 
 function parseFrontmatter(text, filePath) {
@@ -158,92 +181,171 @@ function parseQuotedField(text, field) {
   return value ? value.replace(/\\"/g, '"') : undefined;
 }
 
-async function validateSkills() {
-  const skillDir = path.join(repoRoot, 'skills');
-  const actual = (await readdir(skillDir)).sort();
-  if (actual.join('\n') !== expectedSkills.join('\n')) {
-    throw new Error(`skill set mismatch\nexpected:\n${expectedSkills.join('\n')}\nactual:\n${actual.join('\n')}`);
+function parseHeadings(text) {
+  return new Set(
+    [...text.matchAll(/^##\s+(.+?)\s*$/gm)].map((match) => match[1]),
+  );
+}
+
+function validateReferencedSections(text, filePath) {
+  const headings = parseHeadings(text);
+  for (const section of requiredPreambleSections) {
+    if (!headings.has(section)) {
+      throw new Error(`${filePath}: missing generated preamble section "${section}"`);
+    }
   }
 
-  for (const skill of expectedSkills) {
-    const rel = path.join('skills', skill, 'SKILL.md');
-    const text = await readFile(path.join(repoRoot, rel), 'utf8');
-    const { name, desc } = parseFrontmatter(text, rel);
-    if (name !== `gl-${skill}`) {
-      throw new Error(`${rel}: expected name gl-${skill}, got ${name}`);
-    }
-    if (!desc) {
-      throw new Error(`${rel}: empty description`);
-    }
-    if (desc.length > 1024) {
-      throw new Error(`${rel}: description exceeds 1024 chars (${desc.length})`);
-    }
-
-    const metadataRel = path.join('skills', skill, 'agents', 'openai.yaml');
-    const metadata = await readFile(path.join(repoRoot, metadataRel), 'utf8');
-    const displayName = parseQuotedField(metadata, 'display_name');
-    const shortDescription = parseQuotedField(metadata, 'short_description');
-    const defaultPrompt = parseQuotedField(metadata, 'default_prompt');
-    if (displayName !== `gl-${skill}`) {
-      throw new Error(`${metadataRel}: expected display_name gl-${skill}, got ${displayName}`);
-    }
-    if (!shortDescription) {
-      throw new Error(`${metadataRel}: missing short_description`);
-    }
-    if (!defaultPrompt?.includes(`$gl-${skill}`)) {
-      throw new Error(`${metadataRel}: default_prompt must mention $gl-${skill}`);
-    }
-    if (!/^policy:\n  allow_implicit_invocation: true\n?$/m.test(metadata)) {
-      throw new Error(`${metadataRel}: expected allow_implicit_invocation policy`);
+  for (const { heading, patterns } of referencedSectionPatterns) {
+    if (patterns.some((pattern) => pattern.test(text)) && !headings.has(heading)) {
+      throw new Error(`${filePath}: references missing section "${heading}"`);
     }
   }
 }
 
-async function validateForbiddenText() {
-  const files = [];
-  for (const root of scanRoots) {
-    await walk(root, files);
+async function validateSkillFile({ skill, filePath }) {
+  const text = await readFile(filePath, 'utf8');
+  const { name, desc } = parseFrontmatter(text, rel(filePath));
+  if (name !== `gl-${skill}`) {
+    throw new Error(`${rel(filePath)}: expected name gl-${skill}, got ${name}`);
+  }
+  if (!desc) {
+    throw new Error(`${rel(filePath)}: empty description`);
+  }
+  if (desc.length > 1024) {
+    throw new Error(`${rel(filePath)}: description exceeds 1024 chars (${desc.length})`);
+  }
+  if (/\{\{[A-Z_]+(?::[^}]+)?\}\}/.test(text)) {
+    throw new Error(`${rel(filePath)}: unresolved generator placeholder`);
+  }
+  validateReferencedSections(text, rel(filePath));
+}
+
+async function validateMetadata({ skill, metadataPath }) {
+  const metadata = await readFile(metadataPath, 'utf8');
+  const displayName = parseQuotedField(metadata, 'display_name');
+  const shortDescription = parseQuotedField(metadata, 'short_description');
+  const defaultPrompt = parseQuotedField(metadata, 'default_prompt');
+  if (displayName !== `gl-${skill}`) {
+    throw new Error(`${rel(metadataPath)}: expected display_name gl-${skill}, got ${displayName}`);
+  }
+  if (!shortDescription) {
+    throw new Error(`${rel(metadataPath)}: missing short_description`);
+  }
+  if (!defaultPrompt?.includes(`$gl-${skill}`)) {
+    throw new Error(`${rel(metadataPath)}: default_prompt must mention $gl-${skill}`);
+  }
+  if (!/^policy:\n  allow_implicit_invocation: true\n?$/m.test(metadata)) {
+    throw new Error(`${rel(metadataPath)}: expected allow_implicit_invocation policy`);
+  }
+}
+
+async function validateSourceSkills() {
+  const actual = await discoverTemplateSkills(repoRoot);
+  if (actual.join('\n') !== expectedSkillsSorted.join('\n')) {
+    throw new Error(`skill set mismatch\nexpected:\n${expectedSkillsSorted.join('\n')}\nactual:\n${actual.join('\n')}`);
   }
 
+  for (const skill of expectedSkills) {
+    const skillDir = path.join(repoRoot, 'skills', skill);
+    const templatePath = path.join(skillDir, 'SKILL.md.tmpl');
+    const skillPath = path.join(skillDir, 'SKILL.md');
+    const template = await readFile(templatePath, 'utf8');
+    if (!template.includes('{{LITE_PREAMBLE}}')) {
+      throw new Error(`${rel(templatePath)}: missing {{LITE_PREAMBLE}} placeholder`);
+    }
+
+    const rendered = await renderSkill({ repoRoot, skill, host: 'source' });
+    const committed = await readFile(skillPath, 'utf8');
+    if (committed !== rendered) {
+      throw new Error(`${rel(skillPath)}: generated output is stale; run npm run generate:skills`);
+    }
+
+    await validateSkillFile({ skill, filePath: skillPath });
+    await validateMetadata({
+      skill,
+      metadataPath: path.join(skillDir, 'agents', 'openai.yaml'),
+    });
+  }
+}
+
+async function validateGeneratedHost(host, outDir) {
+  await generateSkills({ repoRoot, host, outDir });
+  for (const skill of expectedSkills) {
+    const skillDir = path.join(outDir, `gl-${skill}`);
+    await validateSkillFile({ skill, filePath: path.join(skillDir, 'SKILL.md') });
+    await validateMetadata({
+      skill,
+      metadataPath: path.join(skillDir, 'agents', 'openai.yaml'),
+    });
+
+    const ethosPath = path.join(skillDir, 'ETHOS.md');
+    const ethosInfo = await lstat(ethosPath);
+    if (!ethosInfo.isFile() && !ethosInfo.isSymbolicLink()) {
+      throw new Error(`${rel(ethosPath)}: ETHOS.md is not reachable`);
+    }
+    const ethos = await readFile(ethosPath, 'utf8');
+    if (!ethos.includes('Search Before Building')) {
+      throw new Error(`${rel(ethosPath)}: ETHOS.md content is not readable`);
+    }
+  }
+}
+
+async function validateForbiddenTextInFiles(files, patterns, label) {
   const failures = [];
   for (const file of files) {
-    const text = await readFile(path.join(repoRoot, file), 'utf8');
-    for (const pattern of forbiddenPatterns) {
+    const text = await readFile(file, 'utf8');
+    for (const pattern of patterns) {
       const match = text.match(pattern);
       if (match) {
-        failures.push(`${file}: ${match[0]}`);
+        failures.push(`${rel(file)}: ${match[0]}`);
       }
     }
   }
 
   if (failures.length) {
-    throw new Error(`forbidden full-gstack references found:\n${failures.join('\n')}`);
-  }
-
-  const browserFiles = [];
-  for (const root of browserScanRoots) {
-    await walk(root, browserFiles);
-  }
-
-  const browserFailures = [];
-  for (const file of browserFiles) {
-    const text = await readFile(path.join(repoRoot, file), 'utf8');
-    for (const pattern of browserForbiddenPatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        browserFailures.push(`${file}: ${match[0]}`);
-      }
-    }
-  }
-
-  if (browserFailures.length) {
-    throw new Error(`forbidden browser resolver references found:\n${browserFailures.join('\n')}`);
+    throw new Error(`${label}:\n${failures.join('\n')}`);
   }
 }
 
+async function validateForbiddenText(generatedRoot) {
+  const sourceFiles = [];
+  for (const root of sourceScanRoots) {
+    await walkFiles(path.join(repoRoot, root), sourceFiles);
+  }
+  const generatedFiles = await walkFiles(generatedRoot);
+  await validateForbiddenTextInFiles(
+    [...sourceFiles, ...generatedFiles],
+    forbiddenPatterns,
+    'forbidden full-gstack references found',
+  );
+
+  const browserFiles = [];
+  for (const root of browserScanRoots) {
+    await walkFiles(path.join(repoRoot, root), browserFiles);
+  }
+  await validateForbiddenTextInFiles(
+    browserFiles,
+    browserForbiddenPatterns,
+    'forbidden browser resolver references found',
+  );
+}
+
 async function main() {
-  await validateSkills();
-  await validateForbiddenText();
+  if (repoRoot !== defaultRepoRoot) {
+    throw new Error(`repo root mismatch: ${repoRoot} !== ${defaultRepoRoot}`);
+  }
+
+  const generatedRoot = await mkdtemp(path.join(os.tmpdir(), 'gstack-lite-validate-'));
+  try {
+    await validateSourceSkills();
+    for (const host of hosts) {
+      await validateGeneratedHost(host, path.join(generatedRoot, host));
+    }
+    await validateForbiddenText(generatedRoot);
+  } finally {
+    await rm(generatedRoot, { recursive: true, force: true });
+  }
+
   console.log('gstack-lite validation passed');
 }
 

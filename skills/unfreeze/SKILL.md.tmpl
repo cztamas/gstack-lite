@@ -1,0 +1,30 @@
+---
+name: gl-unfreeze
+description: |
+  Clear the edit boundary set by /gl-freeze, allowing edits to all directories
+  again. Use when you want to widen edit scope without ending the session.
+  Use when asked to "unfreeze", "unlock edits", "remove freeze", or
+  "allow all edits". (gstack-lite)
+---
+{{LITE_PREAMBLE}}
+
+# /gl-unfreeze - Clear Freeze Boundary
+
+Remove the edit boundary set by `/gl-freeze`, allowing edits to all directories.
+
+## Clear the boundary
+
+```bash
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+STATE_DIR="${GSTACK_LITE_STATE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.gstack-lite}"
+if [ -f "$STATE_DIR/freeze-dir.txt" ]; then
+  PREV=$(cat "$STATE_DIR/freeze-dir.txt")
+  rm -f "$STATE_DIR/freeze-dir.txt"
+  echo "Freeze boundary cleared (was: $PREV). Edits are now allowed everywhere."
+else
+  echo "No freeze boundary was set."
+fi
+```
+
+Tell the user the result. With no boundary file, the lite workflow allows edits
+in all directories. To restrict again, run `/gl-freeze` again.

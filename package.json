@@ -8,9 +8,13 @@
     "browse"
   ],
   "scripts": {
-    "import:skills": "node tools/import-from-gstack.mjs",
     "browser:check": "npm run check --workspace browse",
     "browser:help": "npm run smoke:help --workspace browse",
-    "test": "node tools/validate-lite.mjs"
+    "generate:skills": "node tools/generate-skills.mjs --write-source",
+    "validate": "node tools/validate-lite.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
   }
 }

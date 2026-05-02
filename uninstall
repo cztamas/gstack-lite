@@ -71,9 +71,9 @@ host_skill_dir() {
   esac
 }
 
-remove_managed_link() {
+remove_managed_link_any() {
   local target="$1"
-  local expected="$2"
+  shift
   [ -e "$target" ] || [ -L "$target" ] || return 0
   if [ ! -L "$target" ]; then
     echo "  warning: $target is not a symlink; leaving it untouched" >&2
@@ -82,12 +82,16 @@ remove_managed_link() {
 
   local current
   current="$(readlink "$target" 2>/dev/null || true)"
-  if [ "$current" != "$expected" ]; then
-    echo "  warning: $target points to $current, not $expected; leaving it untouched" >&2
-    return 1
-  fi
+  local expected
+  for expected in "$@"; do
+    if [ "$current" = "$expected" ]; then
+      rm -f "$target"
+      return 0
+    fi
+  done
 
-  rm -f "$target"
+  echo "  warning: $target points to $current, not a managed gstack-lite target; leaving it untouched" >&2
+  return 1
 }
 
 uninstall_host() {
@@ -102,22 +106,23 @@ uninstall_host() {
     local skill
     skill="$(basename "$skill_dir")"
     local target="$skills_dir/gl-$skill"
+    local generated_skill_dir="$RUNTIME_DIR/generated/$host/gl-$skill"
     [ -e "$target" ] || [ -L "$target" ] || continue
     if [ -L "$target" ]; then
       local current
       current="$(readlink "$target" 2>/dev/null || true)"
-      if [ "$current" != "$skill_dir" ]; then
-        echo "  warning: $target points to $current, not $skill_dir; leaving it untouched" >&2
+      if [ "$current" != "$skill_dir" ] && [ "$current" != "$generated_skill_dir" ]; then
+        echo "  warning: $target points to $current, not a managed gstack-lite target; leaving it untouched" >&2
         continue
       fi
       rm -f "$target"
       removed=$((removed + 1))
     elif [ -d "$target" ]; then
       local blocked=0
-      remove_managed_link "$target/SKILL.md" "$skill_dir/SKILL.md" || blocked=1
-      remove_managed_link "$target/ETHOS.md" "$ROOT/ETHOS.md" || blocked=1
+      remove_managed_link_any "$target/SKILL.md" "$skill_dir/SKILL.md" "$generated_skill_dir/SKILL.md" || blocked=1
+      remove_managed_link_any "$target/ETHOS.md" "$ROOT/ETHOS.md" "$generated_skill_dir/ETHOS.md" || blocked=1
       if [ -d "$skill_dir/agents" ]; then
-        remove_managed_link "$target/agents" "$skill_dir/agents" || blocked=1
+        remove_managed_link_any "$target/agents" "$skill_dir/agents" "$generated_skill_dir/agents" || blocked=1
       fi
 
       if [ "$blocked" -eq 0 ] && rmdir "$target" 2>/dev/null; then
