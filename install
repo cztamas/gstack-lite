@@ -101,6 +101,33 @@ link_file() {
   fi
 }
 
+copy_file() {
+  local src="$1"
+  local dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  if [ -L "$dst" ]; then
+    rm -f "$dst"
+  elif [ -d "$dst" ]; then
+    echo "  warning: $dst already exists as a directory; leaving it untouched" >&2
+    return 0
+  fi
+  cp "$src" "$dst"
+}
+
+copy_agents() {
+  local src="$1"
+  local dst="$2"
+  [ -d "$src" ] || return 0
+  if [ -L "$dst" ]; then
+    rm -f "$dst"
+  elif [ -e "$dst" ] && [ ! -d "$dst" ]; then
+    echo "  warning: $dst already exists and is not a directory; leaving it untouched" >&2
+    return 0
+  fi
+  mkdir -p "$dst"
+  cp "$src/openai.yaml" "$dst/openai.yaml"
+}
+
 install_runtime() {
   mkdir -p "$RUNTIME_DIR"
 
@@ -152,10 +179,10 @@ install_host_skill() {
   fi
 
   mkdir -p "$dst"
-  link_file "$skill_dir/SKILL.md" "$dst/SKILL.md"
+  copy_file "$skill_dir/SKILL.md" "$dst/SKILL.md"
   link_file "$skill_dir/ETHOS.md" "$dst/ETHOS.md"
   if [ -d "$skill_dir/agents" ]; then
-    link_dir "$skill_dir/agents" "$dst/agents"
+    copy_agents "$skill_dir/agents" "$dst/agents"
   fi
 }
 

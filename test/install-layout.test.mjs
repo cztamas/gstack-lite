@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, readFile, readlink, rm, stat } from 'node:fs/promises';
+import { lstat, mkdtemp, readFile, readlink, rm, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -29,9 +29,14 @@ describe('installer layout', () => {
       const installed = path.join(codexSkills, 'gl-office-hours');
       await expect(stat(installed)).resolves.toBeTruthy();
 
-      await expect(readlink(path.join(installed, 'SKILL.md'))).resolves.toBe(
-        path.join(runtime, 'generated', 'codex', 'gl-office-hours', 'SKILL.md'),
-      );
+      const skillInfo = await lstat(path.join(installed, 'SKILL.md'));
+      expect(skillInfo.isFile()).toBe(true);
+      expect(skillInfo.isSymbolicLink()).toBe(false);
+
+      const agentsInfo = await lstat(path.join(installed, 'agents'));
+      expect(agentsInfo.isDirectory()).toBe(true);
+      expect(agentsInfo.isSymbolicLink()).toBe(false);
+
       await expect(readlink(path.join(installed, 'ETHOS.md'))).resolves.toBe(
         path.join(runtime, 'generated', 'codex', 'gl-office-hours', 'ETHOS.md'),
       );
