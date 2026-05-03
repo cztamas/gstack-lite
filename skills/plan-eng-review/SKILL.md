@@ -1,5 +1,6 @@
 ---
 name: gl-plan-eng-review
+interactive: true
 description: |
   Eng manager-mode plan review. Lock in the execution plan - architecture,
   data flow, diagrams, edge cases, test coverage, performance. Walks through
@@ -36,7 +37,7 @@ When a skill tells you to ask the user, ask a **Blocking User Question**. This i
 
 ## Blocking User Question Protocol
 
-Use this protocol for every instruction that says to ask the user, wait for the user, get approval, confirm a choice, or stop for feedback.
+Use this protocol for every instruction that says to ask the user, wait for the user, get approval, or confirm a choice. A request to pause or stop for feedback is a blocking gate only when it includes a concrete question or decision for the user.
 
 1. Prefer a host-provided user-input or question tool when one is explicitly available in the current tool list.
 2. If no such tool is available, make the question the final response for this turn and stop. Do not continue with planning, implementation, review sections, or guessed defaults in the same turn.
@@ -94,6 +95,12 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
+
+## Plan Mode Continuation Guard
+
+If this skill is invoked while the host is in plan mode, the skill workflow takes precedence over generic plan-mode behavior. Treat this file as executable workflow instructions, not reference text. Follow it step by step from the design doc check through the completion summary and plan file review report.
+
+A Blocking User Question is a valid mid-review gate. If no concrete Blocking User Question or tool approval is pending, continue to the next review step. Do not end the turn merely because a section ended, had zero findings, or printed "No issues found." Only finish after the review is complete or a real user decision is pending.
 
 # Plan Review Mode
 
@@ -155,7 +162,65 @@ DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -
 
 If a design doc exists, read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design - check the prior version for context on what changed and why.
 
-If no design doc was found, proceed with standard review.
+## Prerequisite Skill Offer
+
+When the design doc check above prints "No design doc found," offer the prerequisite
+skill before proceeding.
+
+Say to the user with a Blocking User Question:
+
+> "No design doc found for this branch. `/gl-office-hours` produces a structured problem
+> statement, premise challenge, and explored alternatives - it gives this review much
+> sharper input to work with. Takes about 10 minutes. The design doc is per-feature,
+> not per-product - it captures the thinking behind this specific change."
+
+Options:
+
+- A) Run /gl-office-hours now (we'll pick up the review right after)
+- B) Skip - proceed with standard review
+
+If they skip: "No worries - standard review. If you ever want sharper input, try
+/gl-office-hours first next time." Then proceed normally. Do not re-offer later in the session.
+
+If they choose A:
+
+Say: "Running /gl-office-hours inline. Once the design doc is ready, I'll pick up
+the review right where we left off."
+
+Read the `$gl-office-hours` skill file.
+
+Prefer the sibling installed skill path `../gl-office-hours/SKILL.md` when the current skill path is visible. In a standard install, use the matching host skill root, for example `$HOME/.codex/skills/gl-office-hours/SKILL.md`.
+
+**If unreadable:** Skip with "Could not load $gl-office-hours - skipping." and continue.
+
+Follow its instructions from top to bottom, **skipping these sections** (already handled by the parent skill):
+- Preamble (run first)
+- User Question Format
+- Completeness Principle - Boil the Lake
+- Search Before Building
+- Contributor Mode
+- Completion Status Protocol
+- Telemetry (run last)
+- Step 0: Detect platform and base branch
+- Review Readiness Dashboard
+- Plan File Review Report
+- Prerequisite Skill Offer
+- Plan Status Footer
+
+Execute every other section at full depth. When the loaded skill's instructions are complete, continue with the next step below.
+
+After /gl-office-hours completes, re-run the design doc check:
+
+```bash
+setopt +o nomatch 2>/dev/null || true  # zsh compat
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
+[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
+[ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
+```
+
+If a design doc is now found, read it and continue the review.
+If none was produced (user may have cancelled), proceed with standard review.
 
 ### Step 0: Scope Challenge
 
@@ -559,7 +624,7 @@ Check the git log for this branch. If there are prior commits suggesting a previ
 - NUMBER issues (1, 2, 3...) and LETTERS for options (A, B, C...).
 - Label with NUMBER + LETTER (e.g., "3A", "3B").
 - One sentence max per option. Pick in under 5 seconds.
-- After each review section, pause and ask for feedback before moving on.
+- After each review section, continue to the next section unless the section surfaced a concrete Blocking User Question that needs the user's answer.
 
 ## Plan File Review Report
 
@@ -578,8 +643,8 @@ Write or replace a final `## GSTACK REVIEW REPORT` section with this shape:
 ```markdown
 ## GSTACK REVIEW REPORT
 
-| Review         | Trigger       | Status                              | Findings           |
-| -------------- | ------------- | ----------------------------------- | ------------------ |
+| Review | Trigger | Status | Findings |
+|--------|---------|--------|----------|
 | Current review | `$gl-<skill>` | DONE / DONE_WITH_CONCERNS / BLOCKED | <one-line summary> |
 ```
 

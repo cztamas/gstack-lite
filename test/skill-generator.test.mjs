@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { expectedSkills, hosts } from '../tools/skill-generator/config.mjs';
-import { defaultRepoRoot, generateSkills } from '../tools/skill-generator/generate.mjs';
+import { defaultRepoRoot, generateSkills, renderSkill } from '../tools/skill-generator/generate.mjs';
 
 describe('skill generator', () => {
   it('generates every host skill with reachable ETHOS.md', async () => {
@@ -50,5 +50,22 @@ describe('skill generator', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
+  });
+
+  it('keeps plan-eng-review interactive without stopping at section boundaries', async () => {
+    const text = await renderSkill({
+      repoRoot: defaultRepoRoot,
+      skill: 'plan-eng-review',
+      host: 'codex',
+    });
+
+    expect(text).toContain('interactive: true');
+    expect(text).toContain('## Plan Mode Continuation Guard');
+    expect(text).toContain('If no concrete Blocking User Question or tool approval is pending, continue');
+    expect(text).toContain(
+      'After each review section, continue to the next section unless the section surfaced a concrete Blocking User Question',
+    );
+    expect(text).not.toContain('confirm a choice, or stop for feedback');
+    expect(text).not.toContain('pause and ask for feedback before moving on');
   });
 });

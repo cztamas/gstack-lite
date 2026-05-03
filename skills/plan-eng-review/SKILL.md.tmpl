@@ -1,5 +1,6 @@
 ---
 name: gl-plan-eng-review
+interactive: true
 description: |
   Eng manager-mode plan review. Lock in the execution plan - architecture,
   data flow, diagrams, edge cases, test coverage, performance. Walks through
@@ -11,6 +12,12 @@ description: |
 ---
 
 {{LITE_PREAMBLE}}
+
+## Plan Mode Continuation Guard
+
+If this skill is invoked while the host is in plan mode, the skill workflow takes precedence over generic plan-mode behavior. Treat this file as executable workflow instructions, not reference text. Follow it step by step from the design doc check through the completion summary and plan file review report.
+
+A Blocking User Question is a valid mid-review gate. If no concrete Blocking User Question or tool approval is pending, continue to the next review step. Do not end the turn merely because a section ended, had zero findings, or printed "No issues found." Only finish after the review is complete or a real user decision is pending.
 
 # Plan Review Mode
 
@@ -514,7 +521,7 @@ Check the git log for this branch. If there are prior commits suggesting a previ
 - NUMBER issues (1, 2, 3...) and LETTERS for options (A, B, C...).
 - Label with NUMBER + LETTER (e.g., "3A", "3B").
 - One sentence max per option. Pick in under 5 seconds.
-- After each review section, pause and ask for feedback before moving on.
+- After each review section, continue to the next section unless the section surfaced a concrete Blocking User Question that needs the user's answer.
 
 {{PLAN_FILE_REVIEW_REPORT}}
 

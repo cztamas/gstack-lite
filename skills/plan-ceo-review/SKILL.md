@@ -36,7 +36,7 @@ When a skill tells you to ask the user, ask a **Blocking User Question**. This i
 
 ## Blocking User Question Protocol
 
-Use this protocol for every instruction that says to ask the user, wait for the user, get approval, confirm a choice, or stop for feedback.
+Use this protocol for every instruction that says to ask the user, wait for the user, get approval, or confirm a choice. A request to pause or stop for feedback is a blocking gate only when it includes a concrete question or decision for the user.
 
 1. Prefer a host-provided user-input or question tool when one is explicitly available in the current tool list.
 2. If no such tool is available, make the question the final response for this turn and stop. Do not continue with planning, implementation, review sections, or guessed defaults in the same turn.
