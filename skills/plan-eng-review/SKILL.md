@@ -161,66 +161,7 @@ DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -
 ```
 
 If a design doc exists, read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design - check the prior version for context on what changed and why.
-
-## Prerequisite Skill Offer
-
-When the design doc check above prints "No design doc found," offer the prerequisite
-skill before proceeding.
-
-Say to the user with a Blocking User Question:
-
-> "No design doc found for this branch. `/gl-office-hours` produces a structured problem
-> statement, premise challenge, and explored alternatives - it gives this review much
-> sharper input to work with. Takes about 10 minutes. The design doc is per-feature,
-> not per-product - it captures the thinking behind this specific change."
-
-Options:
-
-- A) Run /gl-office-hours now (we'll pick up the review right after)
-- B) Skip - proceed with standard review
-
-If they skip: "No worries - standard review. If you ever want sharper input, try
-/gl-office-hours first next time." Then proceed normally. Do not re-offer later in the session.
-
-If they choose A:
-
-Say: "Running /gl-office-hours inline. Once the design doc is ready, I'll pick up
-the review right where we left off."
-
-Read the `$gl-office-hours` skill file.
-
-Prefer the sibling installed skill path `../gl-office-hours/SKILL.md` when the current skill path is visible. In a standard install, use the matching host skill root, for example `$HOME/.codex/skills/gl-office-hours/SKILL.md`.
-
-**If unreadable:** Skip with "Could not load $gl-office-hours - skipping." and continue.
-
-Follow its instructions from top to bottom, **skipping these sections** (already handled by the parent skill):
-- Preamble (run first)
-- User Question Format
-- Completeness Principle - Boil the Lake
-- Search Before Building
-- Contributor Mode
-- Completion Status Protocol
-- Telemetry (run last)
-- Step 0: Detect platform and base branch
-- Review Readiness Dashboard
-- Plan File Review Report
-- Prerequisite Skill Offer
-- Plan Status Footer
-
-Execute every other section at full depth. When the loaded skill's instructions are complete, continue with the next step below.
-
-After /gl-office-hours completes, re-run the design doc check:
-
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
-[ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
-```
-
-If a design doc is now found, read it and continue the review.
-If none was produced (user may have cancelled), proceed with standard review.
+If no design doc was found, proceed with standard review.
 
 ### Step 0: Scope Challenge
 
