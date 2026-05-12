@@ -44,12 +44,12 @@ describe('installer layout', () => {
         'Search Before Building',
       );
 
-      const engReview = await readFile(
-        path.join(codexSkills, 'gl-plan-eng-review', 'SKILL.md'),
+      const ceoReview = await readFile(
+        path.join(codexSkills, 'gl-plan-ceo-review', 'SKILL.md'),
         'utf8',
       );
-      expect(engReview).toContain('$HOME/.codex/skills/gl-office-hours/SKILL.md');
-      expect(engReview).not.toContain('$HOME/.gstack-lite/office-hours/SKILL.md');
+      expect(ceoReview).toContain('$HOME/.codex/skills/gl-office-hours/SKILL.md');
+      expect(ceoReview).not.toContain('$HOME/.gstack-lite/office-hours/SKILL.md');
 
       await execFileAsync('bash', ['uninstall', '--host', 'codex'], {
         cwd: process.cwd(),

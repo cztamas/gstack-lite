@@ -1,5 +1,6 @@
 ---
 name: gl-plan-ceo-review
+interactive: true
 description: |
   CEO/founder-mode plan review. Rethink the problem, find the 10-star product,
   challenge premises, expand scope when it creates a better product. Four modes:
@@ -94,6 +95,12 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
+
+## Plan Mode Continuation Guard
+
+If this skill is invoked while the host is in plan mode, the skill workflow takes precedence over generic plan-mode behavior. Treat this file as executable workflow instructions, not reference text. Follow it step by step from the pre-review system audit through the completion summary, final plan creation, and plan file review report.
+
+A Blocking User Question is a valid mid-review gate. If no concrete Blocking User Question or tool approval is pending, continue to the next review step. Do not end the turn merely because a section ended, had zero findings, printed "No issues found," or printed "No issues, moving on." Only finish after the review is complete, final plan/report work is complete, or a real user decision is pending.
 
 # Mega Plan Review Mode
 
@@ -987,7 +994,7 @@ If promoted, copy the CEO plan content to `docs/designs/{FEATURE}.md` (create th
 * NUMBER issues (1, 2, 3...) and LETTERS for options (A, B, C...).
 * Label with NUMBER + LETTER (e.g., "3A", "3B").
 * One sentence max per option.
-* After each section, pause and wait for feedback.
+* After each review section, continue to the next section unless the section surfaced a concrete Blocking User Question that needs the user's answer.
 * Use **CRITICAL GAP** / **WARNING** / **OK** for scannability.
 
 ## Mode Quick Reference

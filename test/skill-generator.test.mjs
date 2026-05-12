@@ -40,7 +40,7 @@ describe('skill generator', () => {
     try {
       const outDir = path.join(tmp, 'codex');
       await generateSkills({ repoRoot: defaultRepoRoot, host: 'codex', outDir });
-      const text = await readFile(path.join(outDir, 'gl-plan-eng-review', 'SKILL.md'), 'utf8');
+      const text = await readFile(path.join(outDir, 'gl-plan-ceo-review', 'SKILL.md'), 'utf8');
 
       expect(text).toContain('$HOME/.codex/skills/gl-office-hours/SKILL.md');
       expect(text).toContain('../gl-office-hours/SKILL.md');
@@ -66,6 +66,24 @@ describe('skill generator', () => {
       'After each review section, continue to the next section unless the section surfaced a concrete Blocking User Question',
     );
     expect(text).not.toContain('confirm a choice, or stop for feedback');
+    expect(text).not.toContain('pause and ask for feedback before moving on');
+  });
+
+  it('keeps plan-ceo-review interactive through zero-finding sections', async () => {
+    const text = await renderSkill({
+      repoRoot: defaultRepoRoot,
+      skill: 'plan-ceo-review',
+      host: 'codex',
+    });
+
+    expect(text).toContain('interactive: true');
+    expect(text).toContain('## Plan Mode Continuation Guard');
+    expect(text).toContain('If no concrete Blocking User Question or tool approval is pending, continue');
+    expect(text).toContain('printed "No issues found," or printed "No issues, moving on."');
+    expect(text).toContain(
+      'After each review section, continue to the next section unless the section surfaced a concrete Blocking User Question',
+    );
+    expect(text).not.toContain('After each section, pause and wait for feedback');
     expect(text).not.toContain('pause and ask for feedback before moving on');
   });
 });
