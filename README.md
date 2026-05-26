@@ -43,6 +43,7 @@ Generated plans, browser state, QA reports, design artifacts, and other writable
 - `gl-design-consultation`
 - `gl-design-shotgun`
 - `gl-design-html`
+- `gl-design-variants`
 - `gl-design-review`
 - `gl-investigate`
 - `gl-quick-fix`

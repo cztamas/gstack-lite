@@ -71,6 +71,20 @@ async function copyAgents(repoRoot, skill, outDir) {
   await cp(src, dst, { recursive: true });
 }
 
+async function copyAssets(repoRoot, skill, outDir) {
+  const src = path.join(skillSourceDir(repoRoot, skill), 'assets');
+  try {
+    const info = await lstat(src);
+    if (!info.isDirectory()) return;
+  } catch {
+    return;
+  }
+
+  const dst = path.join(outDir, 'assets');
+  await resetPath(dst);
+  await cp(src, dst, { recursive: true });
+}
+
 export async function generateSkills({
   repoRoot = defaultRepoRoot,
   host,
@@ -95,6 +109,7 @@ export async function generateSkills({
     await writeFile(path.join(dir, 'SKILL.md'), await renderSkill({ repoRoot, skill, host }));
     await writeEthosLink(repoRoot, dir);
     await copyAgents(repoRoot, skill, dir);
+    await copyAssets(repoRoot, skill, dir);
     generated.push(dir);
   }
 

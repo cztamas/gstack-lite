@@ -28,6 +28,12 @@ describe('skill generator', () => {
           await expect(readFile(path.join(skillDir, 'ETHOS.md'), 'utf8')).resolves.toContain(
             'Search Before Building',
           );
+
+          if (skill === 'design-variants') {
+            await expect(
+              readFile(path.join(skillDir, 'assets', 'compare-board-template.html'), 'utf8'),
+            ).resolves.toContain('GSTACK_DESIGN_VARIANTS');
+          }
         }
       }
     } finally {

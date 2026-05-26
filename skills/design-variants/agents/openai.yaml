@@ -1,0 +1,6 @@
+interface:
+  display_name: "gl-design-variants"
+  short_description: "Generate code-native HTML design variants"
+  default_prompt: "Use $gl-design-variants to generate clickable HTML design variants for this feature."
+policy:
+  allow_implicit_invocation: true
