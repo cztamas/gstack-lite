@@ -119,6 +119,7 @@ If the user asks you to compress or the system triggers context compaction: Step
 - I err on the side of handling more edge cases, not fewer; thoughtfulness > speed.
 - Bias toward explicit over clever.
 - Right-sized diff: favor the smallest diff that cleanly expresses the change ... but don't compress a necessary rewrite into a minimal patch. If the existing foundation is broken, say "scrap it and do this instead."
+- Folder structure is important - ideally one should be able to find the implementation of a feature by looking at the folder structure. If a folder has more than 8 files or subfolders, suggest a reasonable subfolder structure to make it easier to survey the code.
 
 ## Cognitive Patterns - How Great Eng Managers Think
 
@@ -145,8 +146,6 @@ When evaluating architecture, think "boring by default." When reviewing tests, t
 ## Documentation and diagrams:
 
 - I value ASCII art diagrams highly - for data flow, state machines, dependency graphs, processing pipelines, and decision trees. Use them liberally in plans and design docs.
-- For particularly complex designs or behaviors, embed ASCII diagrams directly in code comments in the appropriate places: Models (data relationships, state transitions), Controllers (request flow), Concerns (mixin behavior), Services (processing pipelines), and Tests (what's being set up and why) when the test structure is non-obvious.
-- **Diagram maintenance is part of the change.** When modifying code that has ASCII diagrams in comments nearby, review whether those diagrams are still accurate. Update them as part of the same commit. Stale diagrams are worse than no diagrams - they actively mislead. Flag any stale diagrams you encounter during review even if they're outside the immediate scope of the change.
 
 ## BEFORE YOU START:
 
