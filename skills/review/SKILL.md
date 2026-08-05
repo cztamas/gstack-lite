@@ -18,6 +18,16 @@ Before following this skill:
 6. Read `ETHOS.md` from this skill directory when the workflow touches product direction, design judgment, architecture, or scope tradeoffs.
 7. Report what changed, what was verified, and any remaining risk.
 
+## Project TODO Tracking
+
+Before reading, creating, updating, or closing TODOs:
+
+1. Read the repository's applicable `AGENTS.md` instructions, starting at the repo root and including any more-specific `AGENTS.md` for the working path. Look for the required work-tracking destination and workflow, such as GitHub Issues, GitHub Projects, another issue tracker, one TODO file, or multiple scoped TODO files.
+2. When those instructions define TODO tracking, follow them exactly. Use the designated tracker, project, file, labels, fields, and item format; do not also write the same item to `TODOS.md` unless the instructions require both.
+3. When the applicable `AGENTS.md` instructions contain no TODO-tracking guidance, fall back to the repository's existing TODO-file pattern. Discover existing root or scoped files such as `TODOS.md` or `TODO.md`, preserve their scope and format, and use the file that owns the affected area. If no TODO file or pattern exists, use a root `TODOS.md` as the legacy fallback.
+4. Keep the skill's existing approval gate before creating or updating deferred work. If the required destination cannot be accessed, do not silently substitute a different tracker: provide the exact proposed item, report the blocked destination, and leave it unrecorded.
+5. In workflow text and summaries, `project TODO tracker` means the destination resolved by this protocol. After a successful write, report the resulting file path, issue URL/number, or project item identifier.
+
 Lite paths:
 
 - Skill ethos: `ETHOS.md` in this skill directory.
@@ -109,9 +119,9 @@ You are running the `/gl-review` workflow. Analyze the current branch's diff aga
 
 Before reviewing code quality, check: **did they build what was requested - nothing more, nothing less?**
 
-1. Read `TODOS.md` (if it exists). Read PR description (`gh pr view --json body --jq .body 2>/dev/null || true`).
+1. Read the project TODO tracker(s) resolved by the preamble when accessible. Read PR description (`gh pr view --json body --jq .body 2>/dev/null || true`).
    Read commit messages (`git log origin/<base>..HEAD --oneline`).
-   **If no PR exists:** rely on commit messages and TODOS.md for stated intent - this is the common case since /gl-review runs before /ship (full gstack only) creates the PR.
+   **If no PR exists:** rely on commit messages and the resolved project TODO tracker(s) for stated intent - this is the common case since /gl-review runs before /ship (full gstack only) creates the PR.
 2. Identify the **stated intent** - what was this branch supposed to accomplish?
 3. Run `git diff origin/<base>...HEAD --stat` and compare the files changed against the stated intent.
 
@@ -123,7 +133,7 @@ Before reviewing code quality, check: **did they build what was requested - noth
    - "While I was in there..." changes that expand blast radius
 
    **MISSING REQUIREMENTS detection:**
-   - Requirements from TODOS.md/PR description not addressed in the diff
+   - Requirements from the project TODO tracker/PR description not addressed in the diff
    - Test coverage gaps for stated requirements
    - Partial implementations (started but not finished)
 
@@ -241,7 +251,7 @@ When no plan file is detected, use these secondary intent sources:
    - Commits with actionable verbs ("add", "implement", "fix", "create", "remove", "update") are intent signals
    - Skip noise: "WIP", "tmp", "squash", "merge", "chore", "typo", "fixup"
    - Extract the intent behind the commit, not the literal message
-2. **TODOS.md:** If it exists, check for items related to this branch or recent dates
+2. **Project TODO tracker:** When accessible, check for items related to this branch or recent dates
 3. **PR description:** Run `gh pr view --json body -q .body 2>/dev/null` for intent context
 
 **With fallback sources:** Apply the same Cross-Reference classification (DONE/PARTIAL/NOT DONE/CHANGED) using best-effort matching. Note that fallback-sourced items are lower confidence than plan-file items.
@@ -274,7 +284,7 @@ The plan completion results augment the existing Scope Drift Detection. If a pla
 - **Items in the diff that don't match any plan item** become evidence for **SCOPE CREEP** detection.
 - **HIGH-impact discrepancies** trigger Ask the user:
   - Show the investigation findings
-  - Options: A) Stop and implement missing items, B) Ship anyway + create P1 TODOs, C) Intentionally dropped
+  - Options: A) Stop and implement missing items, B) Ship anyway + create P1 items in the project TODO tracker, C) Intentionally dropped. If the user chooses B, record the items in the destination resolved by the preamble and report their identifiers.
 
 This is **INFORMATIONAL** unless HIGH-impact discrepancies are found (then it gates with a Blocking User Question).
 
@@ -290,7 +300,7 @@ Plan items: N DONE, M PARTIAL, K NOT DONE
 [If scope creep: list each out-of-scope change not in the plan]
 ```
 
-**No plan file found:** Use commit messages and TODOS.md as fallback sources (see above). If no intent sources at all, skip with: "No intent sources detected - skipping completion audit."
+**No plan file found:** Use commit messages and the resolved project TODO tracker(s) as fallback sources (see above). If no intent sources at all, skip with: "No intent sources detected - skipping completion audit."
 
 ## Step 2: Read the checklist
 
@@ -729,15 +739,15 @@ Before replying to any comment, run the **Escalation Detection** algorithm from 
 
 ---
 
-## Step 5.5: TODOS cross-reference
+## Step 5.5: Project TODO tracker cross-reference
 
-Read `TODOS.md` in the repository root (if it exists). Cross-reference the PR against open TODOs:
+Read the project TODO tracker(s) resolved by the preamble when accessible. Cross-reference the PR against open TODOs:
 
 - **Does this PR close any open TODOs?** If yes, note which items in your output: "This PR addresses TODO: <title>"
 - **Does this PR create work that should become a TODO?** If yes, flag it as an informational finding.
 - **Are there related TODOs that provide context for this review?** If yes, reference them when discussing related findings.
 
-If TODOS.md doesn't exist, skip this step silently.
+If no tracker exists or the resolved tracker cannot be read, note that limitation and continue without inventing tracker state.
 
 ---
 

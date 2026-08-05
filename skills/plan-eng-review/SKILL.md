@@ -23,6 +23,16 @@ Before following this skill:
 6. Read `ETHOS.md` from this skill directory when the workflow touches product direction, design judgment, architecture, or scope tradeoffs.
 7. Report what changed, what was verified, and any remaining risk.
 
+## Project TODO Tracking
+
+Before reading, creating, updating, or closing TODOs:
+
+1. Read the repository's applicable `AGENTS.md` instructions, starting at the repo root and including any more-specific `AGENTS.md` for the working path. Look for the required work-tracking destination and workflow, such as GitHub Issues, GitHub Projects, another issue tracker, one TODO file, or multiple scoped TODO files.
+2. When those instructions define TODO tracking, follow them exactly. Use the designated tracker, project, file, labels, fields, and item format; do not also write the same item to `TODOS.md` unless the instructions require both.
+3. When the applicable `AGENTS.md` instructions contain no TODO-tracking guidance, fall back to the repository's existing TODO-file pattern. Discover existing root or scoped files such as `TODOS.md` or `TODO.md`, preserve their scope and format, and use the file that owns the affected area. If no TODO file or pattern exists, use a root `TODOS.md` as the legacy fallback.
+4. Keep the skill's existing approval gate before creating or updating deferred work. If the required destination cannot be accessed, do not silently substitute a different tracker: provide the exact proposed item, report the blocked destination, and leave it unrecorded.
+5. In workflow text and summaries, `project TODO tracker` means the destination resolved by this protocol. After a successful write, report the resulting file path, issue URL/number, or project item identifier.
+
 Lite paths:
 
 - Skill ethos: `ETHOS.md` in this skill directory.
@@ -179,7 +189,7 @@ Before reviewing anything, answer these questions:
 
    If the plan rolls a custom solution where a built-in exists, flag it as a scope reduction opportunity. Annotate recommendations with **[Layer 1]**, **[Layer 2]**, **[Layer 3]**, or **[EUREKA]** (see preamble's Search Before Building section). If you find a eureka moment - a reason the standard approach is wrong for this case - present it as an architectural insight.
 
-5. **TODOS cross-reference:** Read `TODOS.md` if it exists. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a TODO?
+5. **TODO tracker cross-reference:** Read the project TODO tracker(s) resolved by the preamble when accessible. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a TODO?
 
 6. **Completeness check:** Is the plan doing the complete version or a shortcut? With AI-assisted coding, the cost of completeness (100% test coverage, full edge case handling, complete error paths) is 10-100x cheaper than with a human team. If the plan proposes a shortcut that saves human-hours but only saves minutes with CC+gstack, recommend the complete version. Boil the lake.
 
@@ -480,7 +490,7 @@ Every plan review MUST produce a "NOT in scope" section listing work that was co
 
 List existing code/flows that already partially solve sub-problems in this plan, and whether the plan reuses them or unnecessarily rebuilds them.
 
-### TODOS.md updates
+### Project TODO tracker updates
 
 After all review sections are complete, present each potential TODO as its own individual user question. Never batch TODOs - one per question. Never silently skip this step. Follow the format in `the project TODO format`.
 
@@ -493,7 +503,7 @@ For each TODO, describe:
 - **Context:** Enough detail that someone picking this up in 3 months understands the motivation, the current state, and where to start.
 - **Depends on / blocked by:** Any prerequisites or ordering constraints.
 
-Then present options: **A)** Add to TODOS.md **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring.
+Then present options: **A)** Add to the project TODO tracker **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring. For option A, write to the destination resolved by the preamble only after the user approves it.
 
 Do NOT just append vague bullet points. A TODO without context is worse than no TODO - it creates false confidence that the idea was captured while actually losing the reasoning.
 
@@ -549,7 +559,7 @@ At the end of the review, fill in and display this summary so the user can see a
 - Performance Review: \_\_\_ issues found
 - NOT in scope: written
 - What already exists: written
-- TODOS.md updates: \_\_\_ items proposed to user
+- Project TODO updates: \_\_\_ items proposed to user
 - Failure modes: \_\_\_ critical gaps flagged
 - Outside voice: ran (codex/claude) / skipped
 - Parallelization: **_ lanes, _** parallel / \_\_\_ sequential

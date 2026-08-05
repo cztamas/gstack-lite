@@ -21,6 +21,16 @@ Before following this skill:
 6. Read `ETHOS.md` from this skill directory when the workflow touches product direction, design judgment, architecture, or scope tradeoffs.
 7. Report what changed, what was verified, and any remaining risk.
 
+## Project TODO Tracking
+
+Before reading, creating, updating, or closing TODOs:
+
+1. Read the repository's applicable `AGENTS.md` instructions, starting at the repo root and including any more-specific `AGENTS.md` for the working path. Look for the required work-tracking destination and workflow, such as GitHub Issues, GitHub Projects, another issue tracker, one TODO file, or multiple scoped TODO files.
+2. When those instructions define TODO tracking, follow them exactly. Use the designated tracker, project, file, labels, fields, and item format; do not also write the same item to `TODOS.md` unless the instructions require both.
+3. When the applicable `AGENTS.md` instructions contain no TODO-tracking guidance, fall back to the repository's existing TODO-file pattern. Discover existing root or scoped files such as `TODOS.md` or `TODO.md`, preserve their scope and format, and use the file that owns the affected area. If no TODO file or pattern exists, use a root `TODOS.md` as the legacy fallback.
+4. Keep the skill's existing approval gate before creating or updating deferred work. If the required destination cannot be accessed, do not silently substitute a different tracker: provide the exact proposed item, report the blocked destination, and leave it unrecorded.
+5. In workflow text and summaries, `project TODO tracker` means the destination resolved by this protocol. After a successful write, report the resulting file path, issue URL/number, or project item identifier.
+
 Lite paths:
 
 - Skill ethos: `ETHOS.md` in this skill directory.
@@ -269,7 +279,7 @@ Then read:
 - The plan file (current plan or branch diff)
 - CLAUDE.md - project conventions
 - DESIGN.md - if it exists, ALL design decisions calibrate against it
-- TODOS.md - any design-related TODOs this plan touches
+- Project TODO tracker(s) resolved by the preamble - any design-related TODOs this plan touches
 
 Map:
 * What is the UI scope of this plan? (pages, components, interactions)
@@ -708,7 +718,7 @@ Design decisions considered and explicitly deferred, with one-line rationale eac
 ### "What already exists" section
 Existing DESIGN.md, UI patterns, and components that the plan should reuse.
 
-### TODOS.md updates
+### Project TODO tracker updates
 After all review passes are complete, present each potential TODO as its own individual user question. Never batch TODOs - one per question. Never silently skip this step.
 
 For design debt: missing a11y, unresolved responsive behavior, deferred empty states. Each TODO gets:
@@ -719,7 +729,7 @@ For design debt: missing a11y, unresolved responsive behavior, deferred empty st
 * **Context:** Enough detail that someone picking this up in 3 months understands the motivation.
 * **Depends on / blocked by:** Any prerequisites.
 
-Then present options: **A)** Add to TODOS.md **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring.
+Then present options: **A)** Add to the project TODO tracker **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring. For option A, write to the destination resolved by the preamble only after the user approves it.
 
 ### Completion Summary
 ```
@@ -738,7 +748,7 @@ Then present options: **A)** Add to TODOS.md **B)** Skip - not valuable enough *
   +--------------------------------------------------------------------+
   | NOT in scope         | written (___ items)                         |
   | What already exists  | written                                     |
-  | TODOS.md updates     | ___ items proposed                          |
+  | Project TODO updates | ___ items proposed                          |
   | Approved Mockups     | ___ generated, ___ approved                  |
   | Decisions made       | ___ added to plan                           |
   | Decisions deferred   | ___ (listed below)                          |

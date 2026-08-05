@@ -17,6 +17,9 @@ describe('skill generator', () => {
           const skillDir = path.join(outDir, `gl-${skill}`);
           const skillText = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
           expect(skillText).toContain('## Search Before Building');
+          expect(skillText).toContain('## Project TODO Tracking');
+          expect(skillText).toContain("Read the repository's applicable `AGENTS.md` instructions");
+          expect(skillText).toContain("fall back to the repository's existing TODO-file pattern");
           expect(skillText).toContain('## Blocking User Question Protocol');
           expect(skillText).toContain('make the question the final response for this turn and stop');
           expect(skillText).toContain('Never inline a question and keep going');
@@ -38,6 +41,30 @@ describe('skill generator', () => {
       }
     } finally {
       await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('routes TODO creation through the project tracker instead of hard-coded TODOS.md writes', async () => {
+    const todoWritingSkills = [
+      'plan-ceo-review',
+      'plan-eng-review',
+      'plan-design-review',
+      'qa',
+      'design-review',
+      'cso',
+      'review',
+    ];
+
+    for (const skill of todoWritingSkills) {
+      const text = await renderSkill({
+        repoRoot: defaultRepoRoot,
+        skill,
+        host: 'codex',
+      });
+
+      expect(text).toContain('project TODO tracker');
+      expect(text).not.toMatch(/(?:add|defer) to `?TODOS\.md`?/i);
+      expect(text).not.toMatch(/TODOS\.md (?:update|updates)/i);
     }
   });
 

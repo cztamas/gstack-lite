@@ -23,6 +23,16 @@ Before following this skill:
 6. Read `ETHOS.md` from this skill directory when the workflow touches product direction, design judgment, architecture, or scope tradeoffs.
 7. Report what changed, what was verified, and any remaining risk.
 
+## Project TODO Tracking
+
+Before reading, creating, updating, or closing TODOs:
+
+1. Read the repository's applicable `AGENTS.md` instructions, starting at the repo root and including any more-specific `AGENTS.md` for the working path. Look for the required work-tracking destination and workflow, such as GitHub Issues, GitHub Projects, another issue tracker, one TODO file, or multiple scoped TODO files.
+2. When those instructions define TODO tracking, follow them exactly. Use the designated tracker, project, file, labels, fields, and item format; do not also write the same item to `TODOS.md` unless the instructions require both.
+3. When the applicable `AGENTS.md` instructions contain no TODO-tracking guidance, fall back to the repository's existing TODO-file pattern. Discover existing root or scoped files such as `TODOS.md` or `TODO.md`, preserve their scope and format, and use the file that owns the affected area. If no TODO file or pattern exists, use a root `TODOS.md` as the legacy fallback.
+4. Keep the skill's existing approval gate before creating or updating deferred work. If the required destination cannot be accessed, do not silently substitute a different tracker: provide the exact proposed item, report the blocked destination, and leave it unrecorded.
+5. In workflow text and summaries, `project TODO tracker` means the destination resolved by this protocol. After a successful write, report the resulting file path, issue URL/number, or project item identifier.
+
 Lite paths:
 
 - Skill ethos: `ETHOS.md` in this skill directory.
@@ -122,7 +132,7 @@ Do NOT make any code changes. Do NOT start implementation. Your only job right n
 4. Interactions have edge cases. Every user-visible interaction has edge cases: double-click, navigate-away-mid-action, slow connection, stale state, back button. Map them.
 5. Observability is scope, not afterthought. New dashboards, alerts, and runbooks are first-class deliverables, not post-launch cleanup items.
 6. Diagrams are mandatory. No non-trivial flow goes undiagrammed. ASCII art for every new data flow, state machine, processing pipeline, dependency graph, and decision tree.
-7. Everything deferred must be written down. Vague intentions are lies. TODOS.md or it doesn't exist.
+7. Everything deferred must be written to the project TODO tracker resolved by the preamble. Vague intentions are lies. A deferred item without a durable tracker entry doesn't exist.
 8. Optimize for the 6-month future, not just today. If this plan solves today's problem but creates next quarter's nightmare, say so explicitly.
 9. You have permission to say "scrap it and do this instead." If there's a fundamentally better approach, table it. I'd rather hear it now.
 
@@ -178,7 +188,7 @@ git stash list                                 # Any stashed work
 grep -r "TODO\|FIXME\|HACK\|XXX" -l --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git . | head -30
 git log --since=30.days --name-only --format="" | sort | uniq -c | sort -rn | head -20  # Recently touched files
 ```
-Then read CLAUDE.md, TODOS.md, and any existing architecture docs.
+Then read CLAUDE.md, the project TODO tracker(s) resolved by the preamble, and any existing architecture docs.
 
 **Design doc check:**
 ```bash
@@ -302,11 +312,11 @@ Execute every other section at full depth. When the loaded skill's instructions 
 Note current Step 0A progress so you don't re-ask questions already answered.
 After completion, re-run the design doc check and resume the review.
 
-When reading TODOS.md, specifically:
+When reading the resolved project TODO tracker(s), specifically:
 * Note any TODOs this plan touches, blocks, or unlocks
 * Check if deferred work from prior reviews relates to this plan
 * Flag dependencies: does this plan enable or depend on deferred items?
-* Map known pain points (from TODOS) to this plan's scope
+* Map known pain points from the tracker to this plan's scope
 
 Map:
 * What is the current system state?
@@ -411,7 +421,7 @@ Both are outcome-framed. Only one makes the user feel the cathedral. Lead with t
 1. 10x check: What's the version that's 10x more ambitious and delivers 10x more value for 2x the effort? Describe it concretely.
 2. Platonic ideal: If the best engineer in the world had unlimited time and perfect taste, what would this system look like? What would the user feel when using it? Start from experience, not architecture.
 3. Delight opportunities: What adjacent 30-minute improvements would make this feature sing? Things where a user would think "oh nice, they thought of that." List at least 5.
-4. **Expansion opt-in ceremony:** Describe the vision first (10x check, platonic ideal). Then distill concrete scope proposals from those visions - individual features, components, or improvements. Present each proposal as its own user question. Recommend enthusiastically - explain why it's worth doing. But the user decides. Options: **A)** Add to this plan's scope **B)** Defer to TODOS.md **C)** Skip. Accepted items become plan scope for all remaining review sections. Rejected items go to "NOT in scope."
+4. **Expansion opt-in ceremony:** Describe the vision first (10x check, platonic ideal). Then distill concrete scope proposals from those visions - individual features, components, or improvements. Present each proposal as its own user question. Recommend enthusiastically - explain why it's worth doing. But the user decides. Options: **A)** Add to this plan's scope **B)** Defer to the project TODO tracker **C)** Skip. For option B, record the item in the destination resolved by the preamble after the user approves it. Accepted items become plan scope for all remaining review sections. Rejected items go to "NOT in scope."
 
 **For SELECTIVE EXPANSION** - run the HOLD SCOPE analysis first, then surface expansions:
 1. Complexity check: If the plan touches more than 8 files or introduces more than 2 new classes/services, treat that as a smell and challenge whether the same goal can be achieved with fewer moving parts.
@@ -420,7 +430,7 @@ Both are outcome-framed. Only one makes the user feel the cathedral. Lead with t
    - 10x check: What's the version that's 10x more ambitious? Describe it concretely.
    - Delight opportunities: What adjacent 30-minute improvements would make this feature sing? List at least 5.
    - Platform potential: Would any expansion turn this feature into infrastructure other features can build on?
-4. **Cherry-pick ceremony:** Present each expansion opportunity as its own individual user question. Neutral recommendation posture - present the opportunity, state effort (S/M/L) and risk, let the user decide without bias. Options: **A)** Add to this plan's scope **B)** Defer to TODOS.md **C)** Skip. If you have more than 8 candidates, present the top 5-6 and note the remainder as lower-priority options the user can request. Accepted items become plan scope for all remaining review sections. Rejected items go to "NOT in scope."
+4. **Cherry-pick ceremony:** Present each expansion opportunity as its own individual user question. Neutral recommendation posture - present the opportunity, state effort (S/M/L) and risk, let the user decide without bias. Options: **A)** Add to this plan's scope **B)** Defer to the project TODO tracker **C)** Skip. For option B, record the item in the destination resolved by the preamble after the user approves it. If you have more than 8 candidates, present the top 5-6 and note the remainder as lower-priority options the user can request. Accepted items become plan scope for all remaining review sections. Rejected items go to "NOT in scope."
 
 **For HOLD SCOPE** - run this:
 1. Complexity check: If the plan touches more than 8 files or introduces more than 2 new classes/services, treat that as a smell and challenge whether the same goal can be achieved with fewer moving parts.
@@ -473,8 +483,8 @@ Repo: {owner/repo}
 ## Accepted Scope (added to this plan)
 - {bullet list of what's now in scope}
 
-## Deferred to TODOS.md
-- {items with context}
+## Deferred follow-up work
+- {item with context, resolved tracker destination, and issue/file/project identifier}
 ```
 
 Derive the feature slug from the plan being reviewed (e.g., "user-dashboard", "auth-refactor"). Use the date in YYYY-MM-DD format.
@@ -867,7 +877,7 @@ Complete table of every method that can fail, every exception class, rescued sta
 ```
 Any row with RESCUED=N, TEST=N, USER SEES=Silent -> **CRITICAL GAP**.
 
-### TODOS.md updates
+### Project TODO tracker updates
 Present each potential TODO as its own individual user question. Never batch TODOs - one per question. Never silently skip this step. Follow the format in `the project TODO format`.
 
 For each TODO, describe:
@@ -880,12 +890,12 @@ For each TODO, describe:
 * **Priority:** P1/P2/P3
 * **Depends on / blocked by:** Any prerequisites or ordering constraints.
 
-Then present options: **A)** Add to TODOS.md **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring.
+Then present options: **A)** Add to the project TODO tracker **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring. For option A, write to the destination resolved by the preamble only after the user approves it.
 
 ### Scope Expansion Decisions (EXPANSION and SELECTIVE EXPANSION only)
 For EXPANSION and SELECTIVE EXPANSION modes: expansion opportunities and delight items were surfaced and decided in Step 0D (opt-in/cherry-pick ceremony). The decisions are persisted in the CEO plan document. Reference the CEO plan for the full record. Do not re-surface them here - list the accepted expansions for completeness:
 * Accepted: {list items added to scope}
-* Deferred: {list items sent to TODOS.md}
+* Deferred: {list items recorded in the project TODO tracker, including their identifiers}
 * Skipped: {list items rejected}
 
 ### Diagrams (mandatory, produce all that apply)
@@ -924,7 +934,7 @@ List every ASCII diagram in files this plan touches. Still accurate?
   | Dream state delta    | written                                     |
   | Error/rescue registry| ___ methods, ___ CRITICAL GAPS              |
   | Failure modes        | ___ total, ___ CRITICAL GAPS                |
-  | TODOS.md updates     | ___ items proposed                          |
+  | Project TODO updates | ___ items proposed                          |
   | Scope proposals      | ___ proposed, ___ accepted (EXP + SEL)      |
   | CEO plan             | written / skipped (HOLD/REDUCTION)           |
   | Outside voice        | ran (codex/claude) / skipped                 |

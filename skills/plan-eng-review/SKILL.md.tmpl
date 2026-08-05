@@ -96,7 +96,7 @@ Before reviewing anything, answer these questions:
 
    If the plan rolls a custom solution where a built-in exists, flag it as a scope reduction opportunity. Annotate recommendations with **[Layer 1]**, **[Layer 2]**, **[Layer 3]**, or **[EUREKA]** (see preamble's Search Before Building section). If you find a eureka moment - a reason the standard approach is wrong for this case - present it as an architectural insight.
 
-5. **TODOS cross-reference:** Read `TODOS.md` if it exists. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a TODO?
+5. **TODO tracker cross-reference:** Read the project TODO tracker(s) resolved by the preamble when accessible. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a TODO?
 
 6. **Completeness check:** Is the plan doing the complete version or a shortcut? With AI-assisted coding, the cost of completeness (100% test coverage, full edge case handling, complete error paths) is 10-100x cheaper than with a human team. If the plan proposes a shortcut that saves human-hours but only saves minutes with CC+gstack, recommend the complete version. Boil the lake.
 
@@ -397,7 +397,7 @@ Every plan review MUST produce a "NOT in scope" section listing work that was co
 
 List existing code/flows that already partially solve sub-problems in this plan, and whether the plan reuses them or unnecessarily rebuilds them.
 
-### TODOS.md updates
+### Project TODO tracker updates
 
 After all review sections are complete, present each potential TODO as its own individual user question. Never batch TODOs - one per question. Never silently skip this step. Follow the format in `the project TODO format`.
 
@@ -410,7 +410,7 @@ For each TODO, describe:
 - **Context:** Enough detail that someone picking this up in 3 months understands the motivation, the current state, and where to start.
 - **Depends on / blocked by:** Any prerequisites or ordering constraints.
 
-Then present options: **A)** Add to TODOS.md **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring.
+Then present options: **A)** Add to the project TODO tracker **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring. For option A, write to the destination resolved by the preamble only after the user approves it.
 
 Do NOT just append vague bullet points. A TODO without context is worse than no TODO - it creates false confidence that the idea was captured while actually losing the reasoning.
 
@@ -466,7 +466,7 @@ At the end of the review, fill in and display this summary so the user can see a
 - Performance Review: \_\_\_ issues found
 - NOT in scope: written
 - What already exists: written
-- TODOS.md updates: \_\_\_ items proposed to user
+- Project TODO updates: \_\_\_ items proposed to user
 - Failure modes: \_\_\_ critical gaps flagged
 - Outside voice: ran (codex/claude) / skipped
 - Parallelization: **_ lanes, _** parallel / \_\_\_ sequential
