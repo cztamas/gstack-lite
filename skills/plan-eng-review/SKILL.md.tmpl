@@ -389,6 +389,18 @@ Follow the User Question Format from the Preamble above. Additional rules for pl
 
 ## Required outputs
 
+### Durable Plan File
+
+Do not treat the chat transcript as the only copy of the plan. Unless the user explicitly asks for the complete plan inline in chat, write the completed, implementation-ready plan to a durable repository file and keep the chat response to a concise summary plus the file path.
+
+Resolve the destination in this order:
+
+1. If the reviewed plan already has a file, update that file.
+2. Otherwise, read the applicable repository instructions and follow any repository-specific guidance for plan files, including the required directory and naming convention.
+3. If the repository has no guidance, write the plan beneath `.gstack-lite/` in the active repository, using `$GSTACK_LITE_STATE_DIR` after running `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"`.
+
+Create the destination directory when needed. Include every required output below in the durable plan file. If the user explicitly requests an inline plan, provide it inline as requested; do not silently create a second canonical copy in another location.
+
 ### "NOT in scope" section
 
 Every plan review MUST produce a "NOT in scope" section listing work that was considered and explicitly deferred, with a one-line rationale for each item.
@@ -399,7 +411,7 @@ List existing code/flows that already partially solve sub-problems in this plan,
 
 ### Semantic Commit Map
 
-Before finishing the review, add an ordered `## Semantic Commit Map` to the active plan file and the final implementation handoff. If no active plan file exists, include it in the final handoff only.
+Before finishing the review, add an ordered `## Semantic Commit Map` to the durable plan file and summarize it in the final implementation handoff.
 
 Plan the smallest commits that form complete logical units. Every commit must leave the repository buildable, releasable under the stated compatibility model, and understandable without relying on later commits to explain its purpose. Prefer separate structural and behavioral commits when each can satisfy that invariant. When a change needs a compatibility transition, plan the minimum safe sequence, such as additive foundation -> dormant or dual-path behavior -> activation -> cleanup.
 

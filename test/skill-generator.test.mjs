@@ -127,6 +127,24 @@ describe('skill generator', () => {
     }
   });
 
+  it('persists engineering and CEO plans using repository-specific guidance', async () => {
+    for (const skill of ['plan-eng-review', 'plan-ceo-review']) {
+      for (const host of ['source', ...hosts]) {
+        const text = await renderSkill({
+          repoRoot: defaultRepoRoot,
+          skill,
+          host,
+        });
+
+        expect(text).toContain('## Durable Plan File');
+        expect(text).toContain('repository-specific guidance');
+        expect(text).toContain('`.gstack-lite/`');
+        expect(text).toContain('explicitly asks for the complete plan inline in chat');
+        expect(text).toContain('Do not treat the chat transcript as the only copy of the plan');
+      }
+    }
+  });
+
   it('keeps plan-ceo-review interactive through zero-finding sections', async () => {
     const text = await renderSkill({
       repoRoot: defaultRepoRoot,
