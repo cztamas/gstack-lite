@@ -397,6 +397,34 @@ Every plan review MUST produce a "NOT in scope" section listing work that was co
 
 List existing code/flows that already partially solve sub-problems in this plan, and whether the plan reuses them or unnecessarily rebuilds them.
 
+### Semantic Commit Map
+
+Before finishing the review, add an ordered `## Semantic Commit Map` to the active plan file and the final implementation handoff. If no active plan file exists, include it in the final handoff only.
+
+Plan the smallest commits that form complete logical units. Every commit must leave the repository buildable, releasable under the stated compatibility model, and understandable without relying on later commits to explain its purpose. Prefer separate structural and behavioral commits when each can satisfy that invariant. When a change needs a compatibility transition, plan the minimum safe sequence, such as additive foundation -> dormant or dual-path behavior -> activation -> cleanup.
+
+Keep failing red-green TDD states local. Tests and implementation land together in a green commit; do not publish a deliberately failing test as a standalone commit.
+
+Treat the semantic commit map as a living execution plan. During implementation, update the active plan and the remaining commit map before proceeding when required work is more complex than expected, a necessary change was overlooked, or a better independently releasable boundary becomes clear. Split, merge, reorder, or rewrite planned commits as needed.
+
+Do not stop for user approval when only commit boundaries, ordering, or summaries change and the final implementation scope, externally visible behavior, compatibility contract, risk, and required authority remain unchanged. Ask for direction when re-planning would materially change any of those. Every revised commit must still satisfy the releasable invariant and include every field below.
+
+Use this format for every planned commit:
+
+```markdown
+## Semantic Commit Map
+
+1. `<imperative commit summary>`
+   - **Intent:** One behavior or structural outcome.
+   - **Dependencies:** Earlier commits or external prerequisites, or `none`.
+   - **Releasable invariant:** Why the repository remains buildable and safe to release at this boundary.
+   - **Compatibility/flag state:** Compatibility guarantees and whether behavior is dormant, shadowed, flagged, or active.
+   - **Verification:** Focused red-green proof and relevant repository gates.
+   - **Revert safety:** What reverting this commit does and any required ordering.
+```
+
+For repositories that squash-merge PRs, the map still governs the implementation-branch commits; the final squash commit represents the complete PR invariant. If the work cannot be decomposed into multiple independently releasable commits without artificial scaffolding, say so explicitly and plan one cohesive commit rather than inventing meaningless boundaries.
+
 ### Project TODO tracker updates
 
 After all review sections are complete, present each potential TODO as its own individual user question. Never batch TODOs - one per question. Never silently skip this step. Follow the format in `the project TODO format`.

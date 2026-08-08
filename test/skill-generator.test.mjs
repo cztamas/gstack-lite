@@ -102,6 +102,31 @@ describe('skill generator', () => {
     expect(text).not.toContain('pause and ask for feedback before moving on');
   });
 
+  it('requires a releasable semantic commit map in every plan-eng-review rendering', async () => {
+    for (const host of ['source', ...hosts]) {
+      const text = await renderSkill({
+        repoRoot: defaultRepoRoot,
+        skill: 'plan-eng-review',
+        host,
+      });
+
+      expect(text).toContain('## Semantic Commit Map');
+      expect(text).toContain('**Intent:**');
+      expect(text).toContain('**Dependencies:**');
+      expect(text).toContain('**Releasable invariant:**');
+      expect(text).toContain('**Compatibility/flag state:**');
+      expect(text).toContain('**Verification:**');
+      expect(text).toContain('**Revert safety:**');
+      expect(text).toContain('Keep failing red-green TDD states local');
+      expect(text).toContain('Tests and implementation land together in a green commit');
+      expect(text).toContain('Treat the semantic commit map as a living execution plan');
+      expect(text).toContain(
+        'Do not stop for user approval when only commit boundaries, ordering, or summaries change',
+      );
+      expect(text).toContain('Every revised commit must still satisfy the releasable invariant');
+    }
+  });
+
   it('keeps plan-ceo-review interactive through zero-finding sections', async () => {
     const text = await renderSkill({
       repoRoot: defaultRepoRoot,
