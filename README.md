@@ -22,7 +22,17 @@ Other hosts:
 
 The installer generates host-specific skill directories under `$HOME/.gstack-lite/generated/<host>/`, then creates namespaced skill directories such as `gl-review` and `gl-qa` in the selected host. Each installed directory contains symlinks to the generated `SKILL.md`, `agents/` metadata when present, and `ETHOS.md`. Shared runtime assets are linked into `$HOME/.gstack-lite`.
 
-Generated plans, browser state, QA reports, design artifacts, and other writable state default to the active repository's `.gstack-lite/` directory. Add `.gstack-lite/` to that repository's `.gitignore` for local-only state, or commit selected files when the state should be shared with the repo.
+Generated project plans, browser state, QA reports, design artifacts, and other writable state default to the active repository's `.gstack-lite/` directory. Add `.gstack-lite/` to that repository's `.gitignore` for local-only state, or commit selected files when the state should be shared with the repo.
+
+Repositories can define their own project root in `AGENTS.md` or equivalent instructions. Without repository guidance, durable multi-task projects use this structure:
+
+```text
+.gstack-lite/projects/<project-slug>/
+├── status.md
+└── plan.md
+```
+
+`status.md` is the short current snapshot and immediate handoff. `plan.md` holds durable scope, decisions, architecture, implementation, and verification detail. Substantial supplementary outputs use specific filenames in the same project directory and are linked from one of the two standard files; gstack-lite does not create a generic `evidence.md`.
 
 ## Uninstall
 
@@ -63,7 +73,7 @@ The browser and design runtimes are optional progressive enhancements:
 - Design: `$HOME/.gstack-lite/design/dist/design`
 - Pretext vendor file: `$HOME/.gstack-lite/design-html/vendor/pretext.js`
 
-Writable project state uses `<repo>/.gstack-lite/` by default. Override that with `GSTACK_LITE_STATE_DIR=/absolute/path` if a repository needs a different state location.
+Writable project state uses `<repo>/.gstack-lite/` by default. Override that with `GSTACK_LITE_STATE_DIR=/absolute/path` if a repository needs a different local state location. Repository instructions may instead choose a version-controlled project root such as `docs/projects/`.
 
 Install the browser CLI from npm:
 

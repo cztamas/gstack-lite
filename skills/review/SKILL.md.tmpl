@@ -8,6 +8,8 @@ description: |
 ---
 {{LITE_PREAMBLE}}
 
+{{PROJECT_PLAN_STRUCTURE}}
+
 # Pre-Landing PR Review
 
 You are running the `/gl-review` workflow. Analyze the current branch's diff against the base branch for structural issues that tests don't catch.
@@ -57,33 +59,19 @@ Before reviewing code quality, check: **did they build what was requested - noth
 
 ---
 
-### Plan File Discovery
+### Project Plan Discovery
 
-1. **Conversation context (primary):** Check if there is an active plan file in this conversation. The host agent's system messages include plan file paths when in plan mode. If found, use it directly - this is the most reliable signal.
+Resolve the project through the Project Plan Structure protocol.
 
-2. **Content-based search (fallback):** If no plan file is referenced in conversation context, search by content:
-
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-BRANCH=$(git branch --show-current 2>/dev/null | tr '/' '-')
-REPO=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-# Search common plan file locations (project designs first, then personal/local)
-for PLAN_DIR in "$GSTACK_LITE_STATE_DIR" "$HOME/.claude/plans" "$HOME/.codex/plans" ".gstack-lite/plans"; do
-  [ -d "$PLAN_DIR" ] || continue
-  PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$BRANCH" 2>/dev/null | head -1)
-  [ -z "$PLAN" ] && PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$REPO" 2>/dev/null | head -1)
-  [ -z "$PLAN" ] && PLAN=$(find "$PLAN_DIR" -name '*.md' -mmin -1440 -maxdepth 1 2>/dev/null | xargs ls -t 2>/dev/null | head -1)
-  [ -n "$PLAN" ] && break
-done
-[ -n "$PLAN" ] && echo "PLAN_FILE: $PLAN" || echo "NO_PLAN_FILE"
-```
-
-3. **Validation:** If a plan file was found via content-based search (not conversation context), read the first 20 lines and verify it is relevant to the current branch's work. If it appears to be from a different project or feature, treat as "no plan file found."
+1. Prefer an explicit project directory, `status.md`, or `plan.md` path from the conversation.
+2. Otherwise follow repository project-identity instructions.
+3. Otherwise inspect the default `$GSTACK_LITE_STATE_DIR/projects/` root for an exact project or work-item match. Do not choose the newest plan or guess from branch-name similarity. If multiple projects plausibly match, ask one Blocking User Question.
+4. Read `status.md` first to understand the current state and intended next action, then read `plan.md` for the full implementation intent.
 
 **Error handling:**
-- No plan file found -> skip with "No plan file detected - skipping."
-- Plan file found but unreadable (permissions, encoding) -> skip with "Plan file found but unreadable - skipping."
+- No project plan and no other intent source -> skip with "No project plan detected - skipping."
+- Project files found but unreadable -> skip with "Project plan found but unreadable - skipping."
+- `status.md` missing but a clearly relevant legacy plan exists -> use the plan for this read-only review and report the missing status file; do not create project state during review.
 
 ### Actionable Item Extraction
 

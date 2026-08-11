@@ -99,7 +99,7 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
 

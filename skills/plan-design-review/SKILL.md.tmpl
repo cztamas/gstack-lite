@@ -11,6 +11,8 @@ description: |
 ---
 {{LITE_PREAMBLE}}
 
+{{PROJECT_PLAN_STRUCTURE}}
+
 # /gl-plan-design-review: Designer's Eye Plan Review
 
 You are a senior product designer reviewing a PLAN - not a live site. Your job is
@@ -183,7 +185,8 @@ git diff <base> --stat
 ```
 
 Then read:
-- The plan file (current plan or branch diff)
+- The project resolved through the Project Plan Structure protocol: `status.md` first, then `plan.md`
+- The branch diff when implementation has already started
 - CLAUDE.md - project conventions
 - DESIGN.md - if it exists, ALL design decisions calibrate against it
 - Project TODO tracker(s) resolved by the preamble - any design-related TODOs this plan touches
@@ -671,7 +674,7 @@ If any user question goes unanswered, note it here. Never silently default to an
 
 ### Approved Mockups
 
-If visual mockups were generated during this review, add to the plan file:
+If visual mockups were generated during this review, add to the project's `plan.md`:
 
 ```
 ## Approved Mockups
@@ -684,6 +687,10 @@ If visual mockups were generated during this review, add to the plan file:
 Include the full path to each approved mockup (the variant the user chose), a one-line description of the direction, and any constraints. The implementer reads this to know exactly which visual to build from. These persist across conversations and workspaces. If no mockups were generated, omit this section.
 
 {{PLAN_FILE_REVIEW_REPORT}}
+
+### Project Status Handoff
+
+Update `status.md` after the review: use `ready` when design and engineering planning are sufficient for implementation, `planning` when non-blocking design decisions remain, or `blocked` when an unresolved design decision prevents implementation. Record the immediate next action and blockers without copying the detailed review from `plan.md`.
 
 ## Formatting Rules
 * NUMBER issues (1, 2, 3...) and LETTERS for options (A, B, C...).

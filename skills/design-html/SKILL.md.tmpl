@@ -2,7 +2,7 @@
 name: gl-design-html
 description: |
   Design finalization: generates production-quality Pretext-native HTML/CSS.
-  Works with approved mockups from /gl-design-shotgun, CEO plans from /gl-plan-ceo-review,
+  Works with approved mockups from /gl-design-shotgun, project plans reviewed by /gl-plan-ceo-review,
   design review context from /gl-plan-design-review, or from scratch with a user
   description. Text actually reflows, heights are computed, layouts are dynamic.
   30KB overhead, zero deps. Smart API routing: picks the right Pretext patterns
@@ -12,6 +12,8 @@ description: |
   Voice triggers (speech-to-text aliases): "build the design", "code the mockup", "make it real".
 ---
 {{LITE_PREAMBLE}}
+
+{{PROJECT_PLAN_STRUCTURE}}
 
 # /gl-design-html: Pretext-Native HTML Engine
 
@@ -157,13 +159,7 @@ If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Instal
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 ```
 
-Detect what design context exists for this project. Run all four checks:
-
-```bash
-setopt +o nomatch 2>/dev/null || true
-_CEO=$(ls -t $GSTACK_LITE_STATE_DIR/ceo-plans/*.md 2>/dev/null | head -1)
-[ -n "$_CEO" ] && echo "CEO_PLAN: $_CEO" || echo "NO_CEO_PLAN"
-```
+Detect what design context exists for this project. First resolve the project through the Project Plan Structure protocol and read `status.md` plus the design-relevant sections of `plan.md`. Then run the three artifact checks below.
 
 ```bash
 setopt +o nomatch 2>/dev/null || true
@@ -189,7 +185,7 @@ Now route based on what was found. Check these cases in order:
 ### Case A: approved.json exists (design-shotgun ran)
 
 If `APPROVED` was found, read it. Extract: approved variant PNG path, user feedback,
-screen name. Also read the CEO plan if one exists (it adds strategic context).
+screen name. Also use the resolved project plan for strategic context.
 
 Read `DESIGN.md` if it exists in the repo root. These tokens take priority for
 system-level values (fonts, brand colors, spacing scale).
@@ -204,17 +200,17 @@ If evolve: read the existing HTML. Apply changes on top during Step 3.
 If fresh or no finalized.html: proceed to Step 1 with the approved PNG as the
 visual reference.
 
-### Case B: CEO plan and/or design variants exist, but no approved.json
+### Case B: Project plan and/or design variants exist, but no approved.json
 
-If `CEO_PLAN` or `VARIANTS` was found but no `APPROVED`:
+If a project `plan.md` was resolved or `VARIANTS` was found but no `APPROVED`:
 
 Read whichever context exists:
-- If CEO plan found: read it and summarize the product vision and design requirements.
+- If `plan.md` exists: read it and summarize the product vision and design requirements.
 - If variant PNGs found: show them inline using the Read tool.
 - If DESIGN.md found: read it for design tokens and constraints.
 
 Ask the user:
-> Found [CEO plan from /gl-plan-ceo-review | design review variants from /gl-plan-design-review | both]
+> Found [project plan | design review variants from /gl-plan-design-review | both]
 > but no approved design mockup.
 > A) Run /gl-design-shotgun - explore design variants based on the existing plan context
 > B) Skip mockups - I'll design the HTML directly from the plan context
@@ -245,9 +241,9 @@ If D: proceed to Step 1 in "freeform mode." Ask the user for a screen name.
 After routing, output a brief context summary:
 - **Mode:** approved-mockup | plan-driven | freeform | evolve
 - **Visual reference:** path to approved PNG, or "none (plan-driven)" or "none (freeform)"
-- **CEO plan:** path or "none"
+- **Project plan:** path or "none"
 - **Design tokens:** "DESIGN.md" or "none"
-- **Screen name:** from approved.json, user-provided, or inferred from CEO plan
+- **Screen name:** from approved.json, user-provided, or inferred from the project plan
 
 ---
 
@@ -263,7 +259,7 @@ This returns colors, typography, layout structure, and component inventory via G
    Describe the visual layout, colors, typography, and component structure yourself.
 
 3. If in plan-driven or freeform mode (no approved PNG), design from context:
-   - **Plan-driven:** read the CEO plan and/or design review notes. Extract the described
+   - **Plan-driven:** read the project plan and/or design review notes. Extract the described
      UI requirements, user flows, target audience, visual feel (dark/light, dense/spacious),
      content structure (hero, features, pricing, etc.), and design constraints. Build an
      implementation spec from the plan's prose rather than a visual reference.
@@ -659,7 +655,7 @@ Write `finalized.json` alongside the HTML:
 ```json
 {
   "source_mockup": "<approved variant PNG path or null>",
-  "source_plan": "<CEO plan path or null>",
+  "source_plan": "<project plan path or null>",
   "mode": "<approved-mockup|plan-driven|freeform|evolve>",
   "html_file": "<path to finalized.html or component file>",
   "pretext_tier": "<selected tier>",

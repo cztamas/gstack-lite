@@ -2,7 +2,7 @@
 name: gl-design-html
 description: |
   Design finalization: generates production-quality Pretext-native HTML/CSS.
-  Works with approved mockups from /gl-design-shotgun, CEO plans from /gl-plan-ceo-review,
+  Works with approved mockups from /gl-design-shotgun, project plans reviewed by /gl-plan-ceo-review,
   design review context from /gl-plan-design-review, or from scratch with a user
   description. Text actually reflows, heights are computed, layouts are dynamic.
   30KB overhead, zero deps. Smart API routing: picks the right Pretext patterns
@@ -102,9 +102,61 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
+
+## Project Plan Structure
+
+Use a project directory only for a bounded outcome that needs durable context across multiple planning, implementation, or review tasks. Do not create one for a quick fix or isolated issue that does not need a maintained plan.
+
+Resolve the project directory in this order:
+
+1. Use an explicit project directory, `status.md`, or `plan.md` path supplied by the user or conversation.
+2. Read the applicable repository instructions and follow their project root, naming, metadata, and identity rules.
+3. Reuse an existing project only when its identity clearly matches the work. Do not select a project merely because its files are newest or its name resembles the current branch. If multiple projects are plausible, ask one Blocking User Question instead of guessing.
+4. When creating a project and the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
+
+The default project directory contains exactly two standard files:
+
+- `status.md` - the short current snapshot: project goal, one status value, updated date, current state, immediate next steps, blockers, and a link to `plan.md`.
+- `plan.md` - the durable problem, scope, decisions, architecture, implementation sequence, semantic commit map when relevant, verification strategy, and links to supplementary artifacts.
+
+Use one of these default statuses unless repository instructions define another vocabulary: `planning`, `ready`, `in_progress`, `blocked`, `complete`, or `cancelled`.
+
+Use this default `status.md` shape, adding repository-specific identity fields near the top when required:
+
+```markdown
+# <Project name>
+
+Status: <status>
+Updated: <YYYY-MM-DD>
+Plan: [plan.md](plan.md)
+
+## Goal
+
+<One or two sentences.>
+
+## Current state
+
+- <Concise current facts.>
+
+## Next steps
+
+1. <Immediate executable action.>
+
+## Blockers
+
+- None.
+```
+
+Keep `status.md` concise and overwrite-oriented; Git history is the progress log. It is the single source of truth for live status, current progress, next steps, and blockers. Do not duplicate those sections in `plan.md`. Update `status.md` when the current state, blockers, or immediate next steps materially change. Update `plan.md` when scope, decisions, architecture, verification, or the semantic commit map changes. Lockstep maintenance means changing the correct file in the same implementation change, not editing both files on every commit.
+
+Keep ordinary test strategy and review conclusions in `plan.md`. Create specifically named supplementary files in the same project directory only when substantial output must be preserved or independently consumed, and link each one from `plan.md` or `status.md`. Do not create a generic catch-all `evidence.md`.
+
+When a review or implementation step finishes, leave `status.md` with an accurate status and executable next action. On completion, summarize the final outcome, set status to `complete`, and remove stale next steps. Do not move completed project directories automatically.
+
+Respect the current skill's authority: report-only skills may read project files, write their normal report artifacts, and report suggested status changes, but must not update `status.md` or `plan.md`.
 
 # /gl-design-html: Pretext-Native HTML Engine
 
@@ -250,13 +302,7 @@ If `NEEDS_SETUP`, browser automation is unavailable in this lite install. Instal
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 ```
 
-Detect what design context exists for this project. Run all four checks:
-
-```bash
-setopt +o nomatch 2>/dev/null || true
-_CEO=$(ls -t $GSTACK_LITE_STATE_DIR/ceo-plans/*.md 2>/dev/null | head -1)
-[ -n "$_CEO" ] && echo "CEO_PLAN: $_CEO" || echo "NO_CEO_PLAN"
-```
+Detect what design context exists for this project. First resolve the project through the Project Plan Structure protocol and read `status.md` plus the design-relevant sections of `plan.md`. Then run the three artifact checks below.
 
 ```bash
 setopt +o nomatch 2>/dev/null || true
@@ -282,7 +328,7 @@ Now route based on what was found. Check these cases in order:
 ### Case A: approved.json exists (design-shotgun ran)
 
 If `APPROVED` was found, read it. Extract: approved variant PNG path, user feedback,
-screen name. Also read the CEO plan if one exists (it adds strategic context).
+screen name. Also use the resolved project plan for strategic context.
 
 Read `DESIGN.md` if it exists in the repo root. These tokens take priority for
 system-level values (fonts, brand colors, spacing scale).
@@ -297,17 +343,17 @@ If evolve: read the existing HTML. Apply changes on top during Step 3.
 If fresh or no finalized.html: proceed to Step 1 with the approved PNG as the
 visual reference.
 
-### Case B: CEO plan and/or design variants exist, but no approved.json
+### Case B: Project plan and/or design variants exist, but no approved.json
 
-If `CEO_PLAN` or `VARIANTS` was found but no `APPROVED`:
+If a project `plan.md` was resolved or `VARIANTS` was found but no `APPROVED`:
 
 Read whichever context exists:
-- If CEO plan found: read it and summarize the product vision and design requirements.
+- If `plan.md` exists: read it and summarize the product vision and design requirements.
 - If variant PNGs found: show them inline using the Read tool.
 - If DESIGN.md found: read it for design tokens and constraints.
 
 Ask the user:
-> Found [CEO plan from /gl-plan-ceo-review | design review variants from /gl-plan-design-review | both]
+> Found [project plan | design review variants from /gl-plan-design-review | both]
 > but no approved design mockup.
 > A) Run /gl-design-shotgun - explore design variants based on the existing plan context
 > B) Skip mockups - I'll design the HTML directly from the plan context
@@ -338,9 +384,9 @@ If D: proceed to Step 1 in "freeform mode." Ask the user for a screen name.
 After routing, output a brief context summary:
 - **Mode:** approved-mockup | plan-driven | freeform | evolve
 - **Visual reference:** path to approved PNG, or "none (plan-driven)" or "none (freeform)"
-- **CEO plan:** path or "none"
+- **Project plan:** path or "none"
 - **Design tokens:** "DESIGN.md" or "none"
-- **Screen name:** from approved.json, user-provided, or inferred from CEO plan
+- **Screen name:** from approved.json, user-provided, or inferred from the project plan
 
 ---
 
@@ -356,7 +402,7 @@ This returns colors, typography, layout structure, and component inventory via G
    Describe the visual layout, colors, typography, and component structure yourself.
 
 3. If in plan-driven or freeform mode (no approved PNG), design from context:
-   - **Plan-driven:** read the CEO plan and/or design review notes. Extract the described
+   - **Plan-driven:** read the project plan and/or design review notes. Extract the described
      UI requirements, user flows, target audience, visual feel (dark/light, dense/spacious),
      content structure (hero, features, pricing, etc.), and design constraints. Build an
      implementation spec from the plan's prose rather than a visual reference.
@@ -752,7 +798,7 @@ Write `finalized.json` alongside the HTML:
 ```json
 {
   "source_mockup": "<approved variant PNG path or null>",
-  "source_plan": "<CEO plan path or null>",
+  "source_plan": "<project plan path or null>",
   "mode": "<approved-mockup|plan-driven|freeform|evolve>",
   "html_file": "<path to finalized.html or component file>",
   "pretext_tier": "<selected tier>",

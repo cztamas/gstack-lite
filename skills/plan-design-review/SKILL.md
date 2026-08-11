@@ -100,9 +100,61 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
+
+## Project Plan Structure
+
+Use a project directory only for a bounded outcome that needs durable context across multiple planning, implementation, or review tasks. Do not create one for a quick fix or isolated issue that does not need a maintained plan.
+
+Resolve the project directory in this order:
+
+1. Use an explicit project directory, `status.md`, or `plan.md` path supplied by the user or conversation.
+2. Read the applicable repository instructions and follow their project root, naming, metadata, and identity rules.
+3. Reuse an existing project only when its identity clearly matches the work. Do not select a project merely because its files are newest or its name resembles the current branch. If multiple projects are plausible, ask one Blocking User Question instead of guessing.
+4. When creating a project and the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
+
+The default project directory contains exactly two standard files:
+
+- `status.md` - the short current snapshot: project goal, one status value, updated date, current state, immediate next steps, blockers, and a link to `plan.md`.
+- `plan.md` - the durable problem, scope, decisions, architecture, implementation sequence, semantic commit map when relevant, verification strategy, and links to supplementary artifacts.
+
+Use one of these default statuses unless repository instructions define another vocabulary: `planning`, `ready`, `in_progress`, `blocked`, `complete`, or `cancelled`.
+
+Use this default `status.md` shape, adding repository-specific identity fields near the top when required:
+
+```markdown
+# <Project name>
+
+Status: <status>
+Updated: <YYYY-MM-DD>
+Plan: [plan.md](plan.md)
+
+## Goal
+
+<One or two sentences.>
+
+## Current state
+
+- <Concise current facts.>
+
+## Next steps
+
+1. <Immediate executable action.>
+
+## Blockers
+
+- None.
+```
+
+Keep `status.md` concise and overwrite-oriented; Git history is the progress log. It is the single source of truth for live status, current progress, next steps, and blockers. Do not duplicate those sections in `plan.md`. Update `status.md` when the current state, blockers, or immediate next steps materially change. Update `plan.md` when scope, decisions, architecture, verification, or the semantic commit map changes. Lockstep maintenance means changing the correct file in the same implementation change, not editing both files on every commit.
+
+Keep ordinary test strategy and review conclusions in `plan.md`. Create specifically named supplementary files in the same project directory only when substantial output must be preserved or independently consumed, and link each one from `plan.md` or `status.md`. Do not create a generic catch-all `evidence.md`.
+
+When a review or implementation step finishes, leave `status.md` with an accurate status and executable next action. On completion, summarize the final outcome, set status to `complete`, and remove stale next steps. Do not move completed project directories automatically.
+
+Respect the current skill's authority: report-only skills may read project files, write their normal report artifacts, and report suggested status changes, but must not update `status.md` or `plan.md`.
 
 # /gl-plan-design-review: Designer's Eye Plan Review
 
@@ -276,7 +328,8 @@ git diff <base> --stat
 ```
 
 Then read:
-- The plan file (current plan or branch diff)
+- The project resolved through the Project Plan Structure protocol: `status.md` first, then `plan.md`
+- The branch diff when implementation has already started
 - CLAUDE.md - project conventions
 - DESIGN.md - if it exists, ALL design decisions calibrate against it
 - Project TODO tracker(s) resolved by the preamble - any design-related TODOs this plan touches
@@ -764,7 +817,7 @@ If any user question goes unanswered, note it here. Never silently default to an
 
 ### Approved Mockups
 
-If visual mockups were generated during this review, add to the plan file:
+If visual mockups were generated during this review, add to the project's `plan.md`:
 
 ```
 ## Approved Mockups
@@ -778,7 +831,7 @@ Include the full path to each approved mockup (the variant the user chose), a on
 
 ## Plan File Review Report
 
-At the end of this review, update the active plan file only when the host has provided a concrete plan file path in the conversation context. If no active plan file is available, skip this section silently.
+At the end of this review, update the resolved project's `plan.md`. If no project was resolved, update an active plan only when the host provided its concrete path. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Use only information available in this lite workflow:
 
@@ -805,6 +858,10 @@ Below the table, add short lines for:
 - **VERDICT:** whether the plan is ready to implement, ready with concerns, or blocked
 
 When replacing an existing report, match from `## GSTACK REVIEW REPORT` through the next `## ` heading or the end of file. Append the new report as the last section in the plan file.
+
+### Project Status Handoff
+
+Update `status.md` after the review: use `ready` when design and engineering planning are sufficient for implementation, `planning` when non-blocking design decisions remain, or `blocked` when an unresolved design decision prevents implementation. Record the immediate next action and blockers without copying the detailed review from `plan.md`.
 
 ## Formatting Rules
 * NUMBER issues (1, 2, 3...) and LETTERS for options (A, B, C...).

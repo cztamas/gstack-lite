@@ -102,9 +102,61 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
+
+## Project Plan Structure
+
+Use a project directory only for a bounded outcome that needs durable context across multiple planning, implementation, or review tasks. Do not create one for a quick fix or isolated issue that does not need a maintained plan.
+
+Resolve the project directory in this order:
+
+1. Use an explicit project directory, `status.md`, or `plan.md` path supplied by the user or conversation.
+2. Read the applicable repository instructions and follow their project root, naming, metadata, and identity rules.
+3. Reuse an existing project only when its identity clearly matches the work. Do not select a project merely because its files are newest or its name resembles the current branch. If multiple projects are plausible, ask one Blocking User Question instead of guessing.
+4. When creating a project and the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
+
+The default project directory contains exactly two standard files:
+
+- `status.md` - the short current snapshot: project goal, one status value, updated date, current state, immediate next steps, blockers, and a link to `plan.md`.
+- `plan.md` - the durable problem, scope, decisions, architecture, implementation sequence, semantic commit map when relevant, verification strategy, and links to supplementary artifacts.
+
+Use one of these default statuses unless repository instructions define another vocabulary: `planning`, `ready`, `in_progress`, `blocked`, `complete`, or `cancelled`.
+
+Use this default `status.md` shape, adding repository-specific identity fields near the top when required:
+
+```markdown
+# <Project name>
+
+Status: <status>
+Updated: <YYYY-MM-DD>
+Plan: [plan.md](plan.md)
+
+## Goal
+
+<One or two sentences.>
+
+## Current state
+
+- <Concise current facts.>
+
+## Next steps
+
+1. <Immediate executable action.>
+
+## Blockers
+
+- None.
+```
+
+Keep `status.md` concise and overwrite-oriented; Git history is the progress log. It is the single source of truth for live status, current progress, next steps, and blockers. Do not duplicate those sections in `plan.md`. Update `status.md` when the current state, blockers, or immediate next steps materially change. Update `plan.md` when scope, decisions, architecture, verification, or the semantic commit map changes. Lockstep maintenance means changing the correct file in the same implementation change, not editing both files on every commit.
+
+Keep ordinary test strategy and review conclusions in `plan.md`. Create specifically named supplementary files in the same project directory only when substantial output must be preserved or independently consumed, and link each one from `plan.md` or `status.md`. Do not create a generic catch-all `evidence.md`.
+
+When a review or implementation step finishes, leave `status.md` with an accurate status and executable next action. On completion, summarize the final outcome, set status to `complete`, and remove stale next steps. Do not move completed project directories automatically.
+
+Respect the current skill's authority: report-only skills may read project files, write their normal report artifacts, and report suggested status changes, but must not update `status.md` or `plan.md`.
 
 ## Plan Mode Continuation Guard
 
@@ -188,45 +240,18 @@ git stash list                                 # Any stashed work
 grep -r "TODO\|FIXME\|HACK\|XXX" -l --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git . | head -30
 git log --since=30.days --name-only --format="" | sort | uniq -c | sort -rn | head -20  # Recently touched files
 ```
-Then read CLAUDE.md, the project TODO tracker(s) resolved by the preamble, and any existing architecture docs.
-
-**Design doc check:**
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
-[ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
-```
-If a design doc exists (from `/gl-office-hours`), read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design.
-
-**Handoff note check** (reuses $BRANCH from the design doc check above):
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-HANDOFF=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-ceo-handoff-*.md 2>/dev/null | head -1)
-[ -n "$HANDOFF" ] && echo "HANDOFF_FOUND: $HANDOFF" || echo "NO_HANDOFF"
-```
-If this block runs in a separate shell from the design doc check, recompute $GSTACK_LITE_STATE_DIR and $BRANCH first using the same commands from that block.
-If a handoff note is found: read it. This contains system audit findings and discussion
-from a prior CEO review session that paused so the user could run `/gl-office-hours`. Use it
-as additional context alongside the design doc. The handoff note helps you avoid re-asking
-questions the user already answered. Do NOT skip any steps - run the full review, but use
-the handoff note to inform your analysis and avoid redundant questions.
-
-Tell the user: "Found a handoff note from your prior CEO review session. I'll use that
-context to pick up where we left off."
+Then read the project TODO tracker(s) resolved by the preamble, existing architecture docs, and the project resolved through the Project Plan Structure protocol. Read `status.md` first and `plan.md` second. Treat `plan.md` as the source of truth for the problem, constraints, and chosen approach; use `status.md` for the current state, blockers, and next steps.
 
 ## Prerequisite Skill Offer
 
-When the design doc check above prints "No design doc found," offer the prerequisite
+When no relevant `plan.md` exists or the problem and alternatives are still unclear, offer the prerequisite
 skill before proceeding.
 
 Say to the user with a Blocking User Question:
 
-> "No design doc found for this branch. `/gl-office-hours` produces a structured problem
+> "No project plan with a structured problem statement was found. `/gl-office-hours` produces a structured problem
 > statement, premise challenge, and explored alternatives - it gives this review much
-> sharper input to work with. Takes about 10 minutes. The design doc is per-feature,
-> not per-product - it captures the thinking behind this specific change."
+> sharper input to work with. Takes about 10 minutes and creates or updates this project's `plan.md`."
 
 Options:
 - A) Run /gl-office-hours now (we'll pick up the review right after)
@@ -237,7 +262,7 @@ If they skip: "No worries - standard review. If you ever want sharper input, try
 
 If they choose A:
 
-Say: "Running /gl-office-hours inline. Once the design doc is ready, I'll pick up
+Say: "Running /gl-office-hours inline. Once the project plan is ready, I'll pick up
 the review right where we left off."
 
 Read the `$gl-office-hours` skill file.
@@ -259,20 +284,11 @@ Follow its instructions from top to bottom, **skipping these sections** (already
 - Plan File Review Report
 - Prerequisite Skill Offer
 - Plan Status Footer
+- Project Plan Structure
 
 Execute every other section at full depth. When the loaded skill's instructions are complete, continue with the next step below.
 
-After /gl-office-hours completes, re-run the design doc check:
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
-[ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
-```
-
-If a design doc is now found, read it and continue the review.
-If none was produced (user may have cancelled), proceed with standard review.
+After /gl-office-hours completes, read the resolved project's updated `status.md` and `plan.md`, then continue the review. If no plan was produced because the user cancelled, proceed with standard review.
 
 **Mid-session detection:** During Step 0A (Premise Challenge), if the user can't
 articulate the problem, keeps changing the problem statement, answers with "I'm not
@@ -306,11 +322,12 @@ Follow its instructions from top to bottom, **skipping these sections** (already
 - Plan File Review Report
 - Prerequisite Skill Offer
 - Plan Status Footer
+- Project Plan Structure
 
 Execute every other section at full depth. When the loaded skill's instructions are complete, continue with the next step below.
 
 Note current Step 0A progress so you don't re-ask questions already answered.
-After completion, re-run the design doc check and resume the review.
+After completion, read the resolved project's updated `status.md` and `plan.md` and resume the review.
 
 When reading the resolved project TODO tracker(s), specifically:
 * Note any TODOs this plan touches, blocks, or unlocks
@@ -444,28 +461,20 @@ Both are outcome-framed. Only one makes the user feel the cathedral. Lead with t
 
 After the scope decision, write the plan to disk so the vision and decisions survive beyond this conversation. Run this step in every mode unless the user explicitly asks for the complete plan inline in chat.
 
-Use an existing plan file when one is being reviewed. Otherwise, follow repository-specific guidance for plan file location and naming. If the repository has no guidance, use the `.gstack-lite/` default below.
+Resolve or create the project directory through the Project Plan Structure protocol. Use its `plan.md`; do not create a parallel CEO-plan file.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR/ceo-plans
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+PROJECT_DIR="$GSTACK_LITE_STATE_DIR/projects/<project-slug>" # fallback only; repository instructions may override
+mkdir -p "$PROJECT_DIR"
 ```
 
-Before writing, check for existing CEO plans in the ceo-plans/ directory. If any are >30 days old or their branch has been merged/deleted, offer to archive them:
-
-```bash
-mkdir -p $GSTACK_LITE_STATE_DIR/ceo-plans/archive
-# For each stale plan: mv $GSTACK_LITE_STATE_DIR/ceo-plans/{old-plan}.md $GSTACK_LITE_STATE_DIR/ceo-plans/archive/
-```
-
-When no repository-specific destination applies, write to `$GSTACK_LITE_STATE_DIR/ceo-plans/{date}-{feature-slug}.md` using this format:
+Create or update `$PROJECT_DIR/plan.md` using this format. Preserve relevant existing engineering detail when enriching a plan produced by another planning skill:
 
 ```markdown
----
-status: ACTIVE
----
 # CEO Plan: {Feature Name}
 Generated by /gl-plan-ceo-review on {date}
-Branch: {branch} | Mode: {EXPANSION / SELECTIVE EXPANSION / HOLD / REDUCTION}
+Mode: {EXPANSION / SELECTIVE EXPANSION / HOLD / REDUCTION}
 Repo: {owner/repo}
 
 ## Vision
@@ -489,9 +498,9 @@ Repo: {owner/repo}
 - {item with context, resolved tracker destination, and issue/file/project identifier}
 ```
 
-Derive the feature slug from the plan being reviewed (e.g., "user-dashboard", "auth-refactor"). Use the date in YYYY-MM-DD format.
+Create or update `$PROJECT_DIR/status.md` with the project goal, `Status: planning` while review decisions remain open, today's date, the accepted scope as current state, the next review or implementation action, blockers, and a relative link to `plan.md`.
 
-After writing the CEO plan, run the spec review loop on it:
+After writing `plan.md`, run the spec review loop on it:
 
 ## Spec Review Loop
 
@@ -862,13 +871,13 @@ Follow the User Question Format from the Preamble above. Additional rules for pl
 
 ### Durable Plan File
 
-Do not treat the chat transcript as the only copy of the plan. Unless the user explicitly asks for the complete plan inline in chat, update the plan file created or resolved in Step 0D-POST with the completed review, all accepted decisions, and every required output below. Return only a concise summary and the file path in chat.
+Do not treat the chat transcript as the only copy of the plan. Unless the user explicitly asks for the complete plan inline in chat, update the project's `plan.md` created or resolved in Step 0D-POST with the completed review, all accepted decisions, and every required output below. Return only a concise summary and the project paths in chat.
 
 Resolve the destination in this order:
 
-1. Use the existing plan file when the review started from one.
-2. Otherwise, read the applicable repository instructions and follow any repository-specific guidance for plan files, including the required directory and naming convention.
-3. If the repository has no guidance, write beneath `.gstack-lite/` in the active repository using `$GSTACK_LITE_STATE_DIR/ceo-plans/`.
+1. Use the existing project's `plan.md` when the review started from one.
+2. Otherwise, read the applicable repository instructions and follow their project root and naming convention.
+3. If the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/plan.md`.
 
 Create the destination directory when needed. If the user explicitly requests an inline plan, provide it inline as requested; do not silently create a second canonical copy in another location.
 
@@ -907,7 +916,7 @@ For each TODO, describe:
 Then present options: **A)** Add to the project TODO tracker **B)** Skip - not valuable enough **C)** Build it now in this PR instead of deferring. For option A, write to the destination resolved by the preamble only after the user approves it.
 
 ### Scope Expansion Decisions (EXPANSION and SELECTIVE EXPANSION only)
-For EXPANSION and SELECTIVE EXPANSION modes: expansion opportunities and delight items were surfaced and decided in Step 0D (opt-in/cherry-pick ceremony). The decisions are persisted in the CEO plan document. Reference the CEO plan for the full record. Do not re-surface them here - list the accepted expansions for completeness:
+For EXPANSION and SELECTIVE EXPANSION modes: expansion opportunities and delight items were surfaced and decided in Step 0D (opt-in/cherry-pick ceremony). The decisions are persisted in `plan.md`. Reference that section for the full record. Do not re-surface them here - list the accepted expansions for completeness:
 * Accepted: {list items added to scope}
 * Deferred: {list items recorded in the project TODO tracker, including their identifiers}
 * Skipped: {list items rejected}
@@ -950,7 +959,7 @@ List every ASCII diagram in files this plan touches. Still accurate?
   | Failure modes        | ___ total, ___ CRITICAL GAPS                |
   | Project TODO updates | ___ items proposed                          |
   | Scope proposals      | ___ proposed, ___ accepted (EXP + SEL)      |
-  | CEO plan             | written / skipped (HOLD/REDUCTION)           |
+  | Project plan         | written                                       |
   | Outside voice        | ran (codex/claude) / skipped                 |
   | Lake Score           | X/Y recommendations chose complete option   |
   | Diagrams produced    | ___ (list types)                            |
@@ -962,20 +971,13 @@ List every ASCII diagram in files this plan touches. Still accurate?
 ### Unresolved Decisions
 If any user question goes unanswered, note it here. Never silently default.
 
-## Handoff Note Cleanup
+## Project Status Handoff
 
-After producing the Completion Summary, clean up any handoff notes for this branch -
-the review is complete and the context is no longer needed.
-
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-rm -f $GSTACK_LITE_STATE_DIR/*-$BRANCH-ceo-handoff-*.md 2>/dev/null || true
-```
+After producing the Completion Summary, update `status.md`: use `ready` when implementation can begin, `planning` when non-blocking decisions remain, or `blocked` when the plan cannot proceed. Record the exact next action and blockers without duplicating the review detail in `plan.md`.
 
 ## Plan File Review Report
 
-At the end of this review, update the active plan file only when the host has provided a concrete plan file path in the conversation context. If no active plan file is available, skip this section silently.
+At the end of this review, update the resolved project's `plan.md`. If no project was resolved, update an active plan only when the host provided its concrete path. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Use only information available in this lite workflow:
 
@@ -1002,17 +1004,6 @@ Below the table, add short lines for:
 - **VERDICT:** whether the plan is ready to implement, ready with concerns, or blocked
 
 When replacing an existing report, match from `## GSTACK REVIEW REPORT` through the next `## ` heading or the end of file. Append the new report as the last section in the plan file.
-
-## docs/designs Promotion (EXPANSION and SELECTIVE EXPANSION only)
-
-At the end of the review, if the vision produced a compelling feature direction, offer to promote the CEO plan to the project repo. Ask the user:
-
-"The vision from this review produced {N} accepted scope expansions. Want to promote it to a design doc in the repo?"
-- **A)** Promote to `docs/designs/{FEATURE}.md` (committed to repo, visible to the team)
-- **B)** Keep in `$GSTACK_LITE_STATE_DIR/` only (repo-local state; ignore or commit at the project's discretion)
-- **C)** Skip
-
-If promoted, copy the CEO plan content to `docs/designs/{FEATURE}.md` (create the directory if needed) and update the `status` field in the original CEO plan from `ACTIVE` to `PROMOTED`.
 
 ## Formatting Rules
 * NUMBER issues (1, 2, 3...) and LETTERS for options (A, B, C...).
@@ -1052,7 +1043,7 @@ If promoted, copy the CEO plan content to `docs/designs/{FEATURE}.md` (create th
   |             |              |  risk check  |              |                    |
   | Error map   | Full + chaos | Full + chaos | Full         | Critical paths     |
   |             |  scenarios   | for accepted |              |  only              |
-  | CEO plan    | Written      | Written      | Skipped      | Skipped            |
+  | Project plan| Written      | Written      | Written      | Written            |
   | Phase 2/3   | Map accepted | Map accepted | Note it      | Skip               |
   | planning    |              | cherry-picks |              |                    |
   | Design      | "Inevitable" | If UI scope  | If UI scope  | Skip               |

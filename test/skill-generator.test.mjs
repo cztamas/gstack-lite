@@ -137,12 +137,74 @@ describe('skill generator', () => {
         });
 
         expect(text).toContain('## Durable Plan File');
-        expect(text).toContain('repository-specific guidance');
-        expect(text).toContain('`.gstack-lite/`');
+        expect(text).toContain('## Project Plan Structure');
+        expect(text).toContain('status.md');
+        expect(text).toContain('plan.md');
+        expect(text).toContain('$GSTACK_LITE_STATE_DIR/projects/<project-slug>/');
         expect(text).toContain('explicitly asks for the complete plan inline in chat');
         expect(text).toContain('Do not treat the chat transcript as the only copy of the plan');
       }
     }
+  });
+
+  it('keeps every project-plan producer and consumer on the shared two-file structure', async () => {
+    const projectPlanSkills = [
+      'office-hours',
+      'plan-ceo-review',
+      'plan-eng-review',
+      'plan-design-review',
+      'design-consultation',
+      'design-html',
+      'design-review',
+      'review',
+      'qa',
+      'qa-only',
+    ];
+
+    for (const skill of projectPlanSkills) {
+      const text = await renderSkill({ repoRoot: defaultRepoRoot, skill, host: 'codex' });
+
+      expect(text).toContain('## Project Plan Structure');
+      expect(text).toContain('status.md');
+      expect(text).toContain('plan.md');
+      expect(text).toContain('$GSTACK_LITE_STATE_DIR/projects/<project-slug>/');
+      expect(text).toContain('Do not create a generic catch-all `evidence.md`');
+      expect(text).toContain('It is the single source of truth for live status');
+      expect(text).toContain('## Current state');
+      expect(text).toContain('## Next steps');
+      expect(text).toContain('## Blockers');
+    }
+  });
+
+  it('uses project plans instead of legacy flat planning artifacts', async () => {
+    const officeHours = await renderSkill({
+      repoRoot: defaultRepoRoot,
+      skill: 'office-hours',
+      host: 'codex',
+    });
+    const ceoReview = await renderSkill({
+      repoRoot: defaultRepoRoot,
+      skill: 'plan-ceo-review',
+      host: 'codex',
+    });
+    const engReview = await renderSkill({
+      repoRoot: defaultRepoRoot,
+      skill: 'plan-eng-review',
+      host: 'codex',
+    });
+    const review = await renderSkill({
+      repoRoot: defaultRepoRoot,
+      skill: 'review',
+      host: 'codex',
+    });
+
+    expect(officeHours).not.toContain('*-design-*.md');
+    expect(officeHours).not.toContain('Supersedes:');
+    expect(ceoReview).not.toContain('/ceo-plans/');
+    expect(ceoReview).not.toContain('status: ACTIVE');
+    expect(engReview).not.toContain('eng-review-test-plan');
+    expect(review).not.toContain('find "$PLAN_DIR"');
+    expect(review).not.toContain('mmin -1440');
   });
 
   it('keeps plan-ceo-review interactive through zero-finding sections', async () => {

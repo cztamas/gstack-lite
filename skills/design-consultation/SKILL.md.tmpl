@@ -11,6 +11,8 @@ description: |
 ---
 {{LITE_PREAMBLE}}
 
+{{PROJECT_PLAN_STRUCTURE}}
+
 # /gl-design-consultation: Your Design System, Built Together
 
 You are a senior product designer with strong opinions about typography, color, and visual systems. You don't present menus - you listen, think, research, and propose. You're opinionated but not dogmatic. You explain your reasoning and welcome pushback.
@@ -485,7 +487,7 @@ After the user picks a direction:
 - If the user wants to iterate further: `$D iterate --feedback "<user's feedback>" --output "$_DESIGN_DIR/refined.png"`
 
 **Plan mode vs. implementation mode:**
-- **If in plan mode:** Add the approved mockup path (the full `$_DESIGN_DIR` path) and extracted tokens to the plan file under an "## Approved Design Direction" section. The design system gets written to DESIGN.md when the plan is implemented.
+- **If in plan mode:** Add the approved mockup path (the full `$_DESIGN_DIR` path) and extracted tokens to the resolved project's `plan.md` under an "## Approved Design Direction" section. The design system gets written to DESIGN.md when the plan is implemented.
 - **If NOT in plan mode:** Proceed directly to Phase 6 and write DESIGN.md with the extracted tokens.
 
 ### Path B: HTML Preview Page (fallback if DESIGN_NOT_AVAILABLE)
@@ -539,7 +541,7 @@ If the user says skip the preview, go directly to Phase 6.
 
 If `$D extract` was used in Phase 5 (Path A), use the extracted tokens as the primary source for DESIGN.md values - colors, typography, and spacing grounded in the approved mockup rather than text descriptions alone. Merge extracted tokens with the Phase 3 proposal (the proposal provides rationale and context; the extraction provides exact values).
 
-**If in plan mode:** Write the DESIGN.md content into the plan file as a "## Proposed DESIGN.md" section. Do NOT write the actual file - that happens at implementation time.
+**If in plan mode:** Write the DESIGN.md content into the resolved project's `plan.md` as a "## Proposed DESIGN.md" section and update `status.md` with the next design or implementation action. Do NOT write the actual file - that happens at implementation time.
 
 **If NOT in plan mode:** Write `DESIGN.md` to the repo root with this structure:
 

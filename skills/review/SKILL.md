@@ -97,9 +97,61 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
+
+## Project Plan Structure
+
+Use a project directory only for a bounded outcome that needs durable context across multiple planning, implementation, or review tasks. Do not create one for a quick fix or isolated issue that does not need a maintained plan.
+
+Resolve the project directory in this order:
+
+1. Use an explicit project directory, `status.md`, or `plan.md` path supplied by the user or conversation.
+2. Read the applicable repository instructions and follow their project root, naming, metadata, and identity rules.
+3. Reuse an existing project only when its identity clearly matches the work. Do not select a project merely because its files are newest or its name resembles the current branch. If multiple projects are plausible, ask one Blocking User Question instead of guessing.
+4. When creating a project and the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
+
+The default project directory contains exactly two standard files:
+
+- `status.md` - the short current snapshot: project goal, one status value, updated date, current state, immediate next steps, blockers, and a link to `plan.md`.
+- `plan.md` - the durable problem, scope, decisions, architecture, implementation sequence, semantic commit map when relevant, verification strategy, and links to supplementary artifacts.
+
+Use one of these default statuses unless repository instructions define another vocabulary: `planning`, `ready`, `in_progress`, `blocked`, `complete`, or `cancelled`.
+
+Use this default `status.md` shape, adding repository-specific identity fields near the top when required:
+
+```markdown
+# <Project name>
+
+Status: <status>
+Updated: <YYYY-MM-DD>
+Plan: [plan.md](plan.md)
+
+## Goal
+
+<One or two sentences.>
+
+## Current state
+
+- <Concise current facts.>
+
+## Next steps
+
+1. <Immediate executable action.>
+
+## Blockers
+
+- None.
+```
+
+Keep `status.md` concise and overwrite-oriented; Git history is the progress log. It is the single source of truth for live status, current progress, next steps, and blockers. Do not duplicate those sections in `plan.md`. Update `status.md` when the current state, blockers, or immediate next steps materially change. Update `plan.md` when scope, decisions, architecture, verification, or the semantic commit map changes. Lockstep maintenance means changing the correct file in the same implementation change, not editing both files on every commit.
+
+Keep ordinary test strategy and review conclusions in `plan.md`. Create specifically named supplementary files in the same project directory only when substantial output must be preserved or independently consumed, and link each one from `plan.md` or `status.md`. Do not create a generic catch-all `evidence.md`.
+
+When a review or implementation step finishes, leave `status.md` with an accurate status and executable next action. On completion, summarize the final outcome, set status to `complete`, and remove stale next steps. Do not move completed project directories automatically.
+
+Respect the current skill's authority: report-only skills may read project files, write their normal report artifacts, and report suggested status changes, but must not update `status.md` or `plan.md`.
 
 # Pre-Landing PR Review
 
@@ -150,33 +202,19 @@ Before reviewing code quality, check: **did they build what was requested - noth
 
 ---
 
-### Plan File Discovery
+### Project Plan Discovery
 
-1. **Conversation context (primary):** Check if there is an active plan file in this conversation. The host agent's system messages include plan file paths when in plan mode. If found, use it directly - this is the most reliable signal.
+Resolve the project through the Project Plan Structure protocol.
 
-2. **Content-based search (fallback):** If no plan file is referenced in conversation context, search by content:
-
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-BRANCH=$(git branch --show-current 2>/dev/null | tr '/' '-')
-REPO=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-# Search common plan file locations (project designs first, then personal/local)
-for PLAN_DIR in "$GSTACK_LITE_STATE_DIR" "$HOME/.claude/plans" "$HOME/.codex/plans" ".gstack-lite/plans"; do
-  [ -d "$PLAN_DIR" ] || continue
-  PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$BRANCH" 2>/dev/null | head -1)
-  [ -z "$PLAN" ] && PLAN=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | xargs grep -l "$REPO" 2>/dev/null | head -1)
-  [ -z "$PLAN" ] && PLAN=$(find "$PLAN_DIR" -name '*.md' -mmin -1440 -maxdepth 1 2>/dev/null | xargs ls -t 2>/dev/null | head -1)
-  [ -n "$PLAN" ] && break
-done
-[ -n "$PLAN" ] && echo "PLAN_FILE: $PLAN" || echo "NO_PLAN_FILE"
-```
-
-3. **Validation:** If a plan file was found via content-based search (not conversation context), read the first 20 lines and verify it is relevant to the current branch's work. If it appears to be from a different project or feature, treat as "no plan file found."
+1. Prefer an explicit project directory, `status.md`, or `plan.md` path from the conversation.
+2. Otherwise follow repository project-identity instructions.
+3. Otherwise inspect the default `$GSTACK_LITE_STATE_DIR/projects/` root for an exact project or work-item match. Do not choose the newest plan or guess from branch-name similarity. If multiple projects plausibly match, ask one Blocking User Question.
+4. Read `status.md` first to understand the current state and intended next action, then read `plan.md` for the full implementation intent.
 
 **Error handling:**
-- No plan file found -> skip with "No plan file detected - skipping."
-- Plan file found but unreadable (permissions, encoding) -> skip with "Plan file found but unreadable - skipping."
+- No project plan and no other intent source -> skip with "No project plan detected - skipping."
+- Project files found but unreadable -> skip with "Project plan found but unreadable - skipping."
+- `status.md` missing but a clearly relevant legacy plan exists -> use the plan for this read-only review and report the missing status file; do not create project state during review.
 
 ### Actionable Item Extraction
 

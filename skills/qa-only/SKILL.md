@@ -99,9 +99,61 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
+
+## Project Plan Structure
+
+Use a project directory only for a bounded outcome that needs durable context across multiple planning, implementation, or review tasks. Do not create one for a quick fix or isolated issue that does not need a maintained plan.
+
+Resolve the project directory in this order:
+
+1. Use an explicit project directory, `status.md`, or `plan.md` path supplied by the user or conversation.
+2. Read the applicable repository instructions and follow their project root, naming, metadata, and identity rules.
+3. Reuse an existing project only when its identity clearly matches the work. Do not select a project merely because its files are newest or its name resembles the current branch. If multiple projects are plausible, ask one Blocking User Question instead of guessing.
+4. When creating a project and the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
+
+The default project directory contains exactly two standard files:
+
+- `status.md` - the short current snapshot: project goal, one status value, updated date, current state, immediate next steps, blockers, and a link to `plan.md`.
+- `plan.md` - the durable problem, scope, decisions, architecture, implementation sequence, semantic commit map when relevant, verification strategy, and links to supplementary artifacts.
+
+Use one of these default statuses unless repository instructions define another vocabulary: `planning`, `ready`, `in_progress`, `blocked`, `complete`, or `cancelled`.
+
+Use this default `status.md` shape, adding repository-specific identity fields near the top when required:
+
+```markdown
+# <Project name>
+
+Status: <status>
+Updated: <YYYY-MM-DD>
+Plan: [plan.md](plan.md)
+
+## Goal
+
+<One or two sentences.>
+
+## Current state
+
+- <Concise current facts.>
+
+## Next steps
+
+1. <Immediate executable action.>
+
+## Blockers
+
+- None.
+```
+
+Keep `status.md` concise and overwrite-oriented; Git history is the progress log. It is the single source of truth for live status, current progress, next steps, and blockers. Do not duplicate those sections in `plan.md`. Update `status.md` when the current state, blockers, or immediate next steps materially change. Update `plan.md` when scope, decisions, architecture, verification, or the semantic commit map changes. Lockstep maintenance means changing the correct file in the same implementation change, not editing both files on every commit.
+
+Keep ordinary test strategy and review conclusions in `plan.md`. Create specifically named supplementary files in the same project directory only when substantial output must be preserved or independently consumed, and link each one from `plan.md` or `status.md`. Do not create a generic catch-all `evidence.md`.
+
+When a review or implementation step finishes, leave `status.md` with an accurate status and executable next action. On completion, summarize the final outcome, set status to `complete`, and remove stale next steps. Do not move completed project directories automatically.
+
+Respect the current skill's authority: report-only skills may read project files, write their normal report artifacts, and report suggested status changes, but must not update `status.md` or `plan.md`.
 
 # /gl-qa-only: Report-Only QA Testing
 
@@ -144,14 +196,10 @@ mkdir -p "$REPORT_DIR/screenshots"
 
 Before falling back to git diff heuristics, check for richer test plan sources:
 
-1. **Project-scoped test plans:** Check `$GSTACK_LITE_STATE_DIR/` for recent `*-test-plan-*.md` files for this repo
-   ```bash
-   setopt +o nomatch 2>/dev/null || true  # zsh compat
-   eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-   ls -t $GSTACK_LITE_STATE_DIR/*-test-plan-*.md 2>/dev/null | head -1
-   ```
-2. **Conversation context:** Check if a prior `/gl-plan-eng-review` or `/gl-plan-ceo-review` produced test plan output in this conversation
-3. **Use whichever source is richer.** Fall back to git diff analysis only if neither is available.
+1. **Project plan:** Resolve the project through the Project Plan Structure protocol. Read `status.md`, then the `## Test Plan` and verification sections of `plan.md`.
+2. **Supplementary checklist:** Follow any specifically named QA or test-plan file linked from the project files.
+3. **Conversation context:** Check whether a prior planning review produced additional test-plan decisions in this conversation.
+4. **Use whichever source is richer.** Fall back to git diff analysis only if none is available.
 
 ---
 
@@ -437,15 +485,11 @@ Minimum 0 per category.
 
 ## Output
 
-Write the report to both local and project-scoped locations:
+Write the normal local report:
 
 **Local:** `.gstack-lite/qa-reports/qa-report-{domain}-{YYYY-MM-DD}.md`
 
-**Project-scoped:** Write test outcome artifact for cross-session context:
-```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
-```
-Write to `$GSTACK_LITE_STATE_DIR/{user}-{branch}-test-outcome-{datetime}.md`
+When the outcome is substantial and the user wants it preserved with the project, additionally write a specifically named report such as `<project-dir>/qa-report-{YYYY-MM-DD}.md`. Because this skill is report-only, do not update `status.md` or `plan.md`; report the suggested status change and link addition in the handoff.
 
 ### Output Structure
 

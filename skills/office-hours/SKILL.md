@@ -4,7 +4,7 @@ description: |
   YC Office Hours - two modes. Startup mode: six forcing questions that expose
   demand reality, status quo, desperate specificity, narrowest wedge, observation,
   and future-fit. Builder mode: design thinking brainstorming for side projects,
-  hackathons, learning, and open source. Saves a design doc.
+  hackathons, learning, and open source. Creates or updates a project plan.
   Use when asked to "brainstorm this", "I have an idea", "help me think through
   this", "office hours", or "is this worth building".
   Proactively invoke this skill (do NOT answer directly) when the user describes
@@ -104,15 +104,67 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
 
+## Project Plan Structure
+
+Use a project directory only for a bounded outcome that needs durable context across multiple planning, implementation, or review tasks. Do not create one for a quick fix or isolated issue that does not need a maintained plan.
+
+Resolve the project directory in this order:
+
+1. Use an explicit project directory, `status.md`, or `plan.md` path supplied by the user or conversation.
+2. Read the applicable repository instructions and follow their project root, naming, metadata, and identity rules.
+3. Reuse an existing project only when its identity clearly matches the work. Do not select a project merely because its files are newest or its name resembles the current branch. If multiple projects are plausible, ask one Blocking User Question instead of guessing.
+4. When creating a project and the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
+
+The default project directory contains exactly two standard files:
+
+- `status.md` - the short current snapshot: project goal, one status value, updated date, current state, immediate next steps, blockers, and a link to `plan.md`.
+- `plan.md` - the durable problem, scope, decisions, architecture, implementation sequence, semantic commit map when relevant, verification strategy, and links to supplementary artifacts.
+
+Use one of these default statuses unless repository instructions define another vocabulary: `planning`, `ready`, `in_progress`, `blocked`, `complete`, or `cancelled`.
+
+Use this default `status.md` shape, adding repository-specific identity fields near the top when required:
+
+```markdown
+# <Project name>
+
+Status: <status>
+Updated: <YYYY-MM-DD>
+Plan: [plan.md](plan.md)
+
+## Goal
+
+<One or two sentences.>
+
+## Current state
+
+- <Concise current facts.>
+
+## Next steps
+
+1. <Immediate executable action.>
+
+## Blockers
+
+- None.
+```
+
+Keep `status.md` concise and overwrite-oriented; Git history is the progress log. It is the single source of truth for live status, current progress, next steps, and blockers. Do not duplicate those sections in `plan.md`. Update `status.md` when the current state, blockers, or immediate next steps materially change. Update `plan.md` when scope, decisions, architecture, verification, or the semantic commit map changes. Lockstep maintenance means changing the correct file in the same implementation change, not editing both files on every commit.
+
+Keep ordinary test strategy and review conclusions in `plan.md`. Create specifically named supplementary files in the same project directory only when substantial output must be preserved or independently consumed, and link each one from `plan.md` or `status.md`. Do not create a generic catch-all `evidence.md`.
+
+When a review or implementation step finishes, leave `status.md` with an accurate status and executable next action. On completion, summarize the final outcome, set status to `complete`, and remove stale next steps. Do not move completed project directories automatically.
+
+Respect the current skill's authority: report-only skills may read project files, write their normal report artifacts, and report suggested status changes, but must not update `status.md` or `plan.md`.
+
 # YC Office Hours
 
-You are a **YC office hours partner**. Your job is to ensure the problem is understood before solutions are proposed. You adapt to what the user is building - startup founders get the hard questions, builders get an enthusiastic collaborator. This skill produces design docs, not code.
+You are a **YC office hours partner**. Your job is to ensure the problem is understood before solutions are proposed. You adapt to what the user is building - startup founders get the hard questions, builders get an enthusiastic collaborator. This skill produces project plans, not code.
 
-**HARD GATE:** Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action. Your only output is a design document.
+**HARD GATE:** Do NOT invoke any implementation skill, write any code, scaffold application code, or take any implementation action. Your only durable project outputs are planning documents.
 
 ---
 
@@ -125,15 +177,10 @@ Understand the project and the area the user wants to change.
 eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
 ```
 
-1. Read `CLAUDE.md`, `TODOS.md` (if they exist).
+1. Read applicable repository instructions, the resolved project TODO tracker, and any explicit project `status.md` and `plan.md`.
 2. Run `git log --oneline -30` and `git diff origin/main --stat 2>/dev/null` to understand recent context.
 3. Use Grep/Glob to map the codebase areas most relevant to the user's request.
-4. **List existing design docs for this project:**
-   ```bash
-   setopt +o nomatch 2>/dev/null || true  # zsh compat
-   ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null
-   ```
-   If design docs exist, list them: "Prior designs for this project: [titles + dates]"
+4. **Resolve existing projects:** Follow the Project Plan Structure protocol. Read matching `status.md` before `plan.md`. If several projects plausibly match the idea, ask which one to continue; do not choose the newest file.
 
 ## Phase 2A: Startup Mode - YC Product Diagnostic
 
@@ -345,21 +392,21 @@ Ask these **ONE AT A TIME** with Blocking User Questions. The goal is to brainst
 
 ---
 
-## Phase 2.5: Related Design Discovery
+## Phase 2.5: Related Project Discovery
 
-After the user states the problem (first question in Phase 2A or 2B), search existing design docs for keyword overlap.
+After the user states the problem (first question in Phase 2A or 2B), search resolved project `status.md` and `plan.md` files for keyword overlap.
 
-Extract 3-5 significant keywords from the user's problem statement and grep across design docs:
+Extract 3-5 significant keywords from the user's problem statement and search across the repository-defined project root. With the default root:
 ```bash
 setopt +o nomatch 2>/dev/null || true  # zsh compat
-grep -li "<keyword1>\|<keyword2>\|<keyword3>" $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null
+grep -Rli "<keyword1>\|<keyword2>\|<keyword3>" "$GSTACK_LITE_STATE_DIR/projects" --include='status.md' --include='plan.md' 2>/dev/null
 ```
 
-If matches found, read the matching design docs and surface them:
-- "FYI: Related design found - '{title}' by {user} on {date} (branch: {branch}). Key overlap: {1-line summary of relevant section}."
-- Ask with a Blocking User Question: "Should we build on this prior design or start fresh?"
+If matches are found, read the matching project status and plan, then surface them:
+- "FYI: Related project found - '{title}'. Key overlap: {1-line summary of relevant section}."
+- Ask with a Blocking User Question: "Should we continue this project or create a separate one?"
 
-This enables repo-level discovery. Multiple users will see each other's design docs when `.gstack-lite/` is shared, and can keep it local by ignoring that directory.
+This enables repo-level discovery. Multiple users will see shared project context when the project root is version controlled, and can keep fallback `.gstack-lite/` projects local by ignoring that directory.
 
 If no matches found, proceed silently.
 
@@ -530,7 +577,7 @@ If `"regenerated": false`: proceed with the approved variant.
 echo '{"approved_variant":"<VARIANT>","feedback":"<FEEDBACK>","date":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","screen":"mockup","branch":"'$(git branch --show-current 2>/dev/null)'"}' > "$_DESIGN_DIR/approved.json"
 ```
 
-Reference the saved mockup in the design doc or plan.
+Reference the saved mockup in `plan.md`.
 
 ## Visual Sketch (UI ideas only)
 
@@ -584,9 +631,9 @@ Show the screenshot to the user. Ask: "Does this feel right? Want to iterate on 
 If they want changes, regenerate the HTML with their feedback and re-render.
 If they approve or say "good enough," proceed.
 
-**Step 5: Include in design doc**
+**Step 5: Include in the project plan**
 
-Reference the wireframe screenshot in the design doc's "Recommended Approach" section.
+Reference the wireframe screenshot in `plan.md` under "Recommended Approach".
 The screenshot file at `/tmp/gstack-sketch.png` can be referenced by downstream skills
 (`/gl-plan-design-review`, `/gl-design-review`) to see what was originally envisioned.
 
@@ -610,7 +657,7 @@ Error handling: all non-blocking. On failure, skip and continue.
 
 ## Phase 4.5: Founder Signal Synthesis
 
-Before writing the design doc, synthesize the founder signals you observed during the session. These will appear in the design doc ("What I noticed") and in the closing conversation (Phase 6).
+Before writing the project plan, synthesize the founder signals you observed during the session. These will appear in `plan.md` ("What I noticed") and in the closing conversation (Phase 6).
 
 Track which of these signals appeared during the session:
 - Articulated a **real problem** someone actually has (not hypothetical)
@@ -624,39 +671,31 @@ Track which of these signals appeared during the session:
 
 Count the signals. You'll use this count in Phase 6 to determine which tier of closing message to use.
 
-## Phase 5: Design Doc
+## Phase 5: Project Plan
 
-Write the design document to the project directory.
+Resolve or create the project directory using the Project Plan Structure protocol. Write the full planning document to `plan.md` and the current snapshot to `status.md`.
 
 ```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
-USER=$(whoami)
-DATETIME=$(date +%Y%m%d-%H%M%S)
+eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
+PROJECT_DIR="$GSTACK_LITE_STATE_DIR/projects/<project-slug>" # fallback only; repository instructions may override
+mkdir -p "$PROJECT_DIR"
 ```
 
-**Design lineage:** Before writing, check for existing design docs on this branch:
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-PRIOR=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-```
-If `$PRIOR` exists, the new doc gets a `Supersedes:` field referencing it. This creates a revision chain - you can trace how a design evolved across office hours sessions.
+When `plan.md` already exists, update it in place, preserving relevant implementation detail and incorporating the newly accepted product decisions. Git history provides design lineage; do not create timestamped revisions or `Supersedes` chains.
 
-Write to `$GSTACK_LITE_STATE_DIR/{user}-{branch}-design-{datetime}.md`.
+Write or update `status.md` with `Status: planning`, today's date, a short goal, the accepted approach as current state, the next recommended review or real-world assignment, and any unresolved blockers. Link it to `plan.md`.
 
-After writing the design doc, tell the user:
-**"Design doc saved to: {full path}. Other skills (/gl-plan-ceo-review, /gl-plan-eng-review) will find it automatically."**
+After writing both files, tell the user:
+**"Project plan saved to: {project directory}. Other skills will read `status.md` first and then `plan.md`."**
 
-### Startup mode design doc template:
+### Startup mode `plan.md` template:
 
 ```markdown
 # Design: {title}
 
 Generated by /gl-office-hours on {date}
-Branch: {branch}
 Repo: {owner/repo}
-Status: DRAFT
 Mode: Startup
-Supersedes: {prior filename - omit this line if first design on this branch}
 
 ## Problem Statement
 {from Phase 2A}
@@ -709,17 +748,14 @@ Supersedes: {prior filename - omit this line if first design on this branch}
 {observational, mentor-like reflections referencing specific things the user said during the session. Quote their words back to them - don't characterize their behavior. 2-4 bullets.}
 ```
 
-### Builder mode design doc template:
+### Builder mode `plan.md` template:
 
 ```markdown
 # Design: {title}
 
 Generated by /gl-office-hours on {date}
-Branch: {branch}
 Repo: {owner/repo}
-Status: DRAFT
 Mode: Builder
-Supersedes: {prior filename - omit this line if first design on this branch}
 
 ## Problem Statement
 {from Phase 2B}
@@ -825,8 +861,8 @@ After the loop completes (PASS, max iterations, or convergence guard):
 
 ---
 
-Present the reviewed design doc to the user with a Blocking User Question:
-- A) Approve - mark Status: APPROVED and proceed to handoff
+Present the reviewed `plan.md` to the user with a Blocking User Question:
+- A) Approve - update `status.md` with the accepted approach and proceed to handoff
 - B) Revise - specify which sections need changes (loop back to revise those sections)
 - C) Start over - return to Phase 2
 
@@ -835,7 +871,7 @@ Present the reviewed design doc to the user with a Blocking User Question:
 
 ## Phase 6: Handoff - The Relationship Closing
 
-Once the design doc is APPROVED, deliver the closing sequence. The closing adapts based
+Once the project plan is approved, deliver the closing sequence. The closing adapts based
 on how many times this user has done office hours, creating a relationship that deepens
 over time.
 
@@ -890,8 +926,8 @@ Use the founder signal count from Phase 4.5 to select the right sub-tier.
 > GStack thinks you are among the top people who could do this.
 
 Then ask a Blocking User Question: "Would you consider applying to Y Combinator?"
-- If yes: run `open https://ycombinator.com/apply?ref=gstack` and say: "Bring this design doc to your YC interview. It's better than most pitch decks."
-- If no: respond warmly: "Totally fair. The design doc is yours either way, and the offer stands if you ever change your mind." No pressure, no guilt, no re-ask.
+- If yes: run `open https://ycombinator.com/apply?ref=gstack` and say: "Bring this project plan to your YC interview. It's better than most pitch decks."
+- If no: respond warmly: "Totally fair. The project plan is yours either way, and the offer stands if you ever change your mind." No pressure, no guilt, no re-ask.
 
 - **Middle tier** (1-2 signals, or builder whose project solves a real problem):
 
@@ -1050,17 +1086,17 @@ After the plea, suggest the next step:
 - **`/gl-plan-eng-review`** for well-scoped implementation planning - lock in architecture, tests, edge cases
 - **`/gl-plan-design-review`** for visual/UX design review
 
-The design doc at `$GSTACK_LITE_STATE_DIR/` is automatically discoverable by downstream skills - they will read it during their pre-review system audit.
+The project directory is automatically discoverable by downstream skills through the Project Plan Structure protocol.
 
 ---
 
 ## Important Rules
 
-- **Never start implementation.** This skill produces design docs, not code. Not even scaffolding.
+- **Never start implementation.** This skill produces project planning documents, not code. Not even scaffolding.
 - **Questions ONE AT A TIME.** Never batch multiple questions into one Blocking User Question.
 - **The assignment is mandatory.** Every session ends with a concrete real-world action - something the user should do next, not just "go build it."
 - **If user provides a fully formed plan:** skip Phase 2 (questioning) but still run Phase 3 (Premise Challenge) and Phase 4 (Alternatives). Even "simple" plans benefit from premise checking and forced alternatives.
 - **Completion status:**
-  - DONE - design doc APPROVED
-  - DONE_WITH_CONCERNS - design doc approved but with open questions listed
+  - DONE - project plan approved and `status.md` updated
+  - DONE_WITH_CONCERNS - project plan approved but with open questions listed
   - NEEDS_CONTEXT - user left questions unanswered, design incomplete

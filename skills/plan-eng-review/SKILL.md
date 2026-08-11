@@ -102,13 +102,65 @@ Display a compact dashboard with rows for Eng Review, CEO Review, Design Review,
 
 ## Plan File Review Report
 
-If the host provides an active plan file path, update or append a `## GSTACK REVIEW REPORT` section using the review you just completed and any visible review context. If no active plan file is available, skip this section silently.
+When the review resolves a project, update or append a `## GSTACK REVIEW REPORT` section in that project's `plan.md`. Otherwise use a concrete active plan file supplied by the host. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Do not read or write full gstack review logs. Do not invent runs that did not happen.
 
+## Project Plan Structure
+
+Use a project directory only for a bounded outcome that needs durable context across multiple planning, implementation, or review tasks. Do not create one for a quick fix or isolated issue that does not need a maintained plan.
+
+Resolve the project directory in this order:
+
+1. Use an explicit project directory, `status.md`, or `plan.md` path supplied by the user or conversation.
+2. Read the applicable repository instructions and follow their project root, naming, metadata, and identity rules.
+3. Reuse an existing project only when its identity clearly matches the work. Do not select a project merely because its files are newest or its name resembles the current branch. If multiple projects are plausible, ask one Blocking User Question instead of guessing.
+4. When creating a project and the repository has no guidance, use `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
+
+The default project directory contains exactly two standard files:
+
+- `status.md` - the short current snapshot: project goal, one status value, updated date, current state, immediate next steps, blockers, and a link to `plan.md`.
+- `plan.md` - the durable problem, scope, decisions, architecture, implementation sequence, semantic commit map when relevant, verification strategy, and links to supplementary artifacts.
+
+Use one of these default statuses unless repository instructions define another vocabulary: `planning`, `ready`, `in_progress`, `blocked`, `complete`, or `cancelled`.
+
+Use this default `status.md` shape, adding repository-specific identity fields near the top when required:
+
+```markdown
+# <Project name>
+
+Status: <status>
+Updated: <YYYY-MM-DD>
+Plan: [plan.md](plan.md)
+
+## Goal
+
+<One or two sentences.>
+
+## Current state
+
+- <Concise current facts.>
+
+## Next steps
+
+1. <Immediate executable action.>
+
+## Blockers
+
+- None.
+```
+
+Keep `status.md` concise and overwrite-oriented; Git history is the progress log. It is the single source of truth for live status, current progress, next steps, and blockers. Do not duplicate those sections in `plan.md`. Update `status.md` when the current state, blockers, or immediate next steps materially change. Update `plan.md` when scope, decisions, architecture, verification, or the semantic commit map changes. Lockstep maintenance means changing the correct file in the same implementation change, not editing both files on every commit.
+
+Keep ordinary test strategy and review conclusions in `plan.md`. Create specifically named supplementary files in the same project directory only when substantial output must be preserved or independently consumed, and link each one from `plan.md` or `status.md`. Do not create a generic catch-all `evidence.md`.
+
+When a review or implementation step finishes, leave `status.md` with an accurate status and executable next action. On completion, summarize the final outcome, set status to `complete`, and remove stale next steps. Do not move completed project directories automatically.
+
+Respect the current skill's authority: report-only skills may read project files, write their normal report artifacts, and report suggested status changes, but must not update `status.md` or `plan.md`.
+
 ## Plan Mode Continuation Guard
 
-If this skill is invoked while the host is in plan mode, the skill workflow takes precedence over generic plan-mode behavior. Treat this file as executable workflow instructions, not reference text. Follow it step by step from the design doc check through the completion summary and plan file review report.
+If this skill is invoked while the host is in plan mode, the skill workflow takes precedence over generic plan-mode behavior. Treat this file as executable workflow instructions, not reference text. Follow it step by step from the project context check through the completion summary and plan file review report.
 
 A Blocking User Question is a valid mid-review gate. If no concrete Blocking User Question or tool approval is pending, continue to the next review step. Do not end the turn merely because a section ended, had zero findings, or printed "No issues found." Only finish after the review is complete or a real user decision is pending.
 
@@ -159,18 +211,9 @@ When evaluating architecture, think "boring by default." When reviewing tests, t
 
 ## BEFORE YOU START:
 
-### Design Doc Check
+### Project Context Check
 
-```bash
-setopt +o nomatch 2>/dev/null || true  # zsh compat
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"
-DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-$BRANCH-design-*.md 2>/dev/null | head -1)
-[ -z "$DESIGN" ] && DESIGN=$(ls -t $GSTACK_LITE_STATE_DIR/*-design-*.md 2>/dev/null | head -1)
-[ -n "$DESIGN" ] && echo "Design doc found: $DESIGN" || echo "No design doc found"
-```
-
-If a design doc exists, read it. Use it as the source of truth for the problem statement, constraints, and chosen approach. If it has a `Supersedes:` field, note that this is a revised design - check the prior version for context on what changed and why.
-If no design doc was found, proceed with standard review.
+Resolve the project through the Project Plan Structure protocol. When it exists, read `status.md` first and `plan.md` second. Use `plan.md` as the source of truth for the problem, constraints, and chosen approach; use `status.md` for the current state, blockers, and next steps. If no project plan exists, create or resolve the project when this review produces a bounded implementation plan.
 
 ### Step 0: Scope Challenge
 
@@ -414,24 +457,12 @@ For each GAP identified in the diagram, add a test requirement to the plan. Be s
 
 The plan should be complete enough that when implementation begins, every test is written alongside the feature code - not deferred to a follow-up.
 
-### Test Plan Artifact
+### Test Plan
 
-After producing the coverage diagram, write a test plan artifact to the project directory so `/gl-qa` and `/gl-qa-only` can consume it as primary test input:
-
-```bash
-eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)" && mkdir -p $GSTACK_LITE_STATE_DIR
-USER=$(whoami)
-DATETIME=$(date +%Y%m%d-%H%M%S)
-```
-
-Write to `$GSTACK_LITE_STATE_DIR/{user}-{branch}-eng-review-test-plan-{datetime}.md`:
+After producing the coverage diagram, add or update a `## Test Plan` section in the project's `plan.md` so `/gl-qa` and `/gl-qa-only` can consume it as primary test input:
 
 ```markdown
-# Test Plan
-
-Generated by /gl-plan-eng-review on {date}
-Branch: {branch}
-Repo: {owner/repo}
+## Test Plan
 
 ## Affected Pages/Routes
 
@@ -450,7 +481,7 @@ Repo: {owner/repo}
 - {end-to-end flow that must work}
 ```
 
-This file is consumed by `/gl-qa` and `/gl-qa-only` as primary test input. Include only the information that helps a QA tester know **what to test and where** - not implementation details.
+Keep the ordinary test strategy in `plan.md`. Only when QA needs a substantial standalone operational checklist, create a specifically named file such as `qa-test-plan.md` in the same project directory and link it from the `## Test Plan` section. Do not create a timestamped test-plan artifact by default.
 
 For LLM/prompt changes: check the "Prompt/LLM changes" file patterns listed in CLAUDE.md. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then ask a Blocking User Question to confirm the eval scope with the user.
 
@@ -488,11 +519,11 @@ Do not treat the chat transcript as the only copy of the plan. Unless the user e
 
 Resolve the destination in this order:
 
-1. If the reviewed plan already has a file, update that file.
-2. Otherwise, read the applicable repository instructions and follow any repository-specific guidance for plan files, including the required directory and naming convention.
-3. If the repository has no guidance, write the plan beneath `.gstack-lite/` in the active repository, using `$GSTACK_LITE_STATE_DIR` after running `eval "$($HOME/.gstack-lite/bin/gl-slug 2>/dev/null)"`.
+1. If the reviewed project already has `plan.md`, update it.
+2. Otherwise, resolve or create the project directory using repository-specific guidance.
+3. If the repository has no guidance, write `$GSTACK_LITE_STATE_DIR/projects/<project-slug>/plan.md` after resolving `$GSTACK_LITE_STATE_DIR` with `gl-slug`.
 
-Create the destination directory when needed. Include every required output below in the durable plan file. If the user explicitly requests an inline plan, provide it inline as requested; do not silently create a second canonical copy in another location.
+Create the destination directory and companion `status.md` when needed. Include every required output below in `plan.md`. If the user explicitly requests an inline plan, provide it inline as requested; do not silently create a second canonical copy in another location.
 
 ### "NOT in scope" section
 
@@ -618,7 +649,7 @@ Check the git log for this branch. If there are prior commits suggesting a previ
 
 ## Plan File Review Report
 
-At the end of this review, update the active plan file only when the host has provided a concrete plan file path in the conversation context. If no active plan file is available, skip this section silently.
+At the end of this review, update the resolved project's `plan.md`. If no project was resolved, update an active plan only when the host provided its concrete path. If neither is available, skip this section silently. Never put the detailed report in `status.md`.
 
 Use only information available in this lite workflow:
 
@@ -645,6 +676,10 @@ Below the table, add short lines for:
 - **VERDICT:** whether the plan is ready to implement, ready with concerns, or blocked
 
 When replacing an existing report, match from `## GSTACK REVIEW REPORT` through the next `## ` heading or the end of file. Append the new report as the last section in the plan file.
+
+## Project Status Handoff
+
+After the review report is written, update `status.md`: use `ready` when implementation can begin, `planning` when non-blocking decisions remain, or `blocked` when the plan cannot proceed. Summarize the reviewed current state, record the exact next action and blockers, and link to `plan.md` without duplicating its implementation detail.
 
 ## Unresolved decisions
 
