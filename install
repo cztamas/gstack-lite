@@ -128,6 +128,17 @@ copy_agents() {
   cp "$src/openai.yaml" "$dst/openai.yaml"
 }
 
+copy_owned_dir() {
+  local src="$1"
+  local dst="$2"
+  if [ -e "$dst" ] || [ -L "$dst" ]; then
+    rm -rf "$dst"
+  fi
+  [ -d "$src" ] || return 0
+  mkdir -p "$(dirname "$dst")"
+  cp -R "$src" "$dst"
+}
+
 install_runtime() {
   mkdir -p "$RUNTIME_DIR"
 
@@ -184,6 +195,7 @@ install_host_skill() {
   if [ -d "$skill_dir/agents" ]; then
     copy_agents "$skill_dir/agents" "$dst/agents"
   fi
+  copy_owned_dir "$skill_dir/references" "$dst/references"
 }
 
 install_host() {

@@ -1,5 +1,12 @@
 export const hosts = ['claude', 'codex', 'cursor'];
 
+export const referenceLoadingByHost = {
+  source: 'lazy',
+  claude: 'lazy',
+  codex: 'lazy',
+  cursor: 'inline',
+};
+
 export const expectedSkills = [
   'office-hours',
   'plan-ceo-review',

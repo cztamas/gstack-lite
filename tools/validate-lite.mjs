@@ -20,8 +20,9 @@ import {
   defaultRepoRoot,
   discoverTemplateSkills,
   generateSkills,
-  renderSkill,
+  renderSkillPackage,
 } from './skill-generator/generate.mjs';
+import { assertProgressiveDisclosureContract } from './skill-generator/progressive-disclosure-contracts.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -228,6 +229,40 @@ async function validateSkillFile({ skill, filePath }) {
   validateReferencedSections(text, rel(filePath));
 }
 
+function validateReferenceText({ skill, filePath, text }) {
+  if (/\{\{[A-Z_]+(?::[^}]+)?\}\}/.test(text)) {
+    throw new Error(`${rel(filePath)}: unresolved generator placeholder in ${skill} reference`);
+  }
+}
+
+async function validateRenderedReferences({ skill, skillDir, references }) {
+  const dir = path.join(skillDir, 'references');
+  const expectedFiles = new Set(references.map((reference) => reference.file));
+  const actualFiles = new Set();
+  if (await exists(dir)) {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      if (entry.isFile() && entry.name.endsWith('.md')) actualFiles.add(entry.name);
+    }
+  }
+
+  if ([...actualFiles].sort().join('\n') !== [...expectedFiles].sort().join('\n')) {
+    throw new Error(
+      `${rel(dir)}: generated reference set mismatch; expected ${[
+        ...expectedFiles,
+      ].join(', ') || 'none'}, got ${[...actualFiles].join(', ') || 'none'}`,
+    );
+  }
+
+  for (const reference of references) {
+    const filePath = path.join(dir, reference.file);
+    const committed = await readFile(filePath, 'utf8');
+    if (committed !== reference.text) {
+      throw new Error(`${rel(filePath)}: generated output is stale; run npm run generate:skills`);
+    }
+    validateReferenceText({ skill, filePath, text: committed });
+  }
+}
+
 async function validateMetadata({ skill, metadataPath }) {
   const metadata = await readFile(metadataPath, 'utf8');
   const displayName = parseQuotedField(metadata, 'display_name');
@@ -262,13 +297,15 @@ async function validateSourceSkills() {
       throw new Error(`${rel(templatePath)}: missing {{LITE_PREAMBLE}} placeholder`);
     }
 
-    const rendered = await renderSkill({ repoRoot, skill, host: 'source' });
+    const rendered = await renderSkillPackage({ repoRoot, skill, host: 'source' });
     const committed = await readFile(skillPath, 'utf8');
-    if (committed !== rendered) {
+    if (committed !== rendered.skillText) {
       throw new Error(`${rel(skillPath)}: generated output is stale; run npm run generate:skills`);
     }
 
     await validateSkillFile({ skill, filePath: skillPath });
+    await validateRenderedReferences({ skill, skillDir, references: rendered.references });
+    assertProgressiveDisclosureContract({ skill, host: 'source', rendered });
     await validateMetadata({
       skill,
       metadataPath: path.join(skillDir, 'agents', 'openai.yaml'),
@@ -280,7 +317,10 @@ async function validateGeneratedHost(host, outDir) {
   await generateSkills({ repoRoot, host, outDir });
   for (const skill of expectedSkills) {
     const skillDir = path.join(outDir, `gl-${skill}`);
+    const rendered = await renderSkillPackage({ repoRoot, skill, host });
     await validateSkillFile({ skill, filePath: path.join(skillDir, 'SKILL.md') });
+    await validateRenderedReferences({ skill, skillDir, references: rendered.references });
+    assertProgressiveDisclosureContract({ skill, host, rendered });
     await validateMetadata({
       skill,
       metadataPath: path.join(skillDir, 'agents', 'openai.yaml'),

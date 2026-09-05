@@ -1,5 +1,9 @@
 import { standardHostSkillRoots } from './config.mjs';
 
+const placeholderPattern = /\{\{([A-Z_]+)(?::([^}]+))?\}\}/g;
+const hasPlaceholderPattern = /\{\{[A-Z_]+(?::[^}]+)?\}\}/;
+const maxTemplateDepth = 24;
+
 const defaultInvokeSkips = [
   'Preamble (run first)',
   'User Question Format',
@@ -235,25 +239,122 @@ Below the table, add short lines for:
 When replacing an existing report, match from \`## GSTACK REVIEW REPORT\` through the next \`## \` heading or the end of file. Append the new report as the last section in the plan file.`;
 }
 
-export function resolveTemplate(text, ctx) {
-  return text.replace(/\{\{([A-Z_]+)(?::([^}]+))?\}\}/g, (match, name, argString = '') => {
-    const args = argString
-      .split(':')
-      .map((arg) => arg.trim())
-      .filter(Boolean);
+function referenceIndex(ctx) {
+  if (!ctx.references?.length) {
+    throw new Error(`${ctx.skill} (${ctx.host}): {{REFERENCE_INDEX}} requires a references manifest`);
+  }
 
-    switch (name) {
-      case 'LITE_PREAMBLE':
-      case 'PREAMBLE':
-        return generateLitePreamble(ctx);
-      case 'PROJECT_PLAN_STRUCTURE':
-        return generateProjectPlanWorkflow(ctx);
-      case 'INVOKE_SKILL':
-        return generateInvokeSkill(ctx, args);
-      case 'PLAN_FILE_REVIEW_REPORT':
-        return generatePlanFileReviewReport(ctx);
-      default:
-        throw new Error(`unknown template placeholder ${match}`);
-    }
+  return `## Progressive Disclosure References
+
+${ctx.references
+  .map(
+    (reference) =>
+      `- [${reference.title}](references/${reference.file}) - ${reference.trigger}`,
+  )
+  .join('\n')}`;
+}
+
+function referenceById(ctx, id, state) {
+  const reference = ctx.references?.find((candidate) => candidate.id === id);
+  if (!reference) {
+    throw new Error(
+      `${ctx.skill} (${ctx.host}) ${state.source}: unknown reference id "${id}"`,
+    );
+  }
+
+  const token = `REFERENCE:${id}`;
+  if (state.stack.includes(token)) {
+    throw new Error(
+      `${ctx.skill} (${ctx.host}) ${state.source}: reference cycle: ${[
+        ...state.stack,
+        token,
+      ].join(' -> ')}`,
+    );
+  }
+
+  if (ctx.referenceLoading === 'inline') {
+    return resolveTemplate(reference.template, ctx, {
+      source: `references/${reference.file}.tmpl`,
+      stack: [...state.stack, token],
+      depth: state.depth + 1,
+    });
+  }
+
+  return `STOP: Read \`references/${reference.file}\` now. ${reference.trigger}
+
+After reading it completely, resume at \`## Eager Completion Invariant Gate\` in this \`SKILL.md\`.`;
+}
+
+function resolvePlaceholder(match, name, argString, ctx, state) {
+  const args = argString
+    .split(':')
+    .map((arg) => arg.trim())
+    .filter(Boolean);
+  const token = [name, ...args].join(':');
+
+  if (state.depth >= maxTemplateDepth) {
+    throw new Error(
+      `${ctx.skill} (${ctx.host}) ${state.source}: template expansion exceeded ${maxTemplateDepth} levels: ${[
+        ...state.stack,
+        token,
+      ].join(' -> ')}`,
+    );
+  }
+
+  if (name !== 'REFERENCE' && state.stack.includes(token)) {
+    throw new Error(
+      `${ctx.skill} (${ctx.host}) ${state.source}: template cycle: ${[
+        ...state.stack,
+        token,
+      ].join(' -> ')}`,
+    );
+  }
+
+  let replacement;
+  switch (name) {
+    case 'LITE_PREAMBLE':
+    case 'PREAMBLE':
+      replacement = generateLitePreamble(ctx);
+      break;
+    case 'PROJECT_PLAN_STRUCTURE':
+      replacement = generateProjectPlanWorkflow(ctx);
+      break;
+    case 'INVOKE_SKILL':
+      replacement = generateInvokeSkill(ctx, args);
+      break;
+    case 'PLAN_FILE_REVIEW_REPORT':
+      replacement = generatePlanFileReviewReport(ctx);
+      break;
+    case 'REFERENCE_INDEX':
+      replacement = referenceIndex(ctx);
+      break;
+    case 'REFERENCE':
+      if (args.length !== 1) {
+        throw new Error(
+          `${ctx.skill} (${ctx.host}) ${state.source}: ${match} requires exactly one reference id`,
+        );
+      }
+      return referenceById(ctx, args[0], state);
+    default:
+      throw new Error(`${ctx.skill} (${ctx.host}) ${state.source}: unknown template placeholder ${match}`);
+  }
+
+  if (!hasPlaceholderPattern.test(replacement)) {
+    return replacement;
+  }
+  return resolveTemplate(replacement, ctx, {
+    ...state,
+    stack: [...state.stack, token],
+    depth: state.depth + 1,
+  });
+}
+
+export function resolveTemplate(
+  text,
+  ctx,
+  { source = 'SKILL.md.tmpl', stack = [], depth = 0 } = {},
+) {
+  return text.replace(placeholderPattern, (match, name, argString = '') => {
+    return resolvePlaceholder(match, name, argString, ctx, { source, stack, depth });
   });
 }

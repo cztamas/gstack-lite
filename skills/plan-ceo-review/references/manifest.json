@@ -1,0 +1,8 @@
+[
+  {
+    "id": "review-flow",
+    "file": "review-flow.md",
+    "title": "Detailed review and completion flow",
+    "trigger": "Read when the review reaches the detailed review passes."
+  }
+]

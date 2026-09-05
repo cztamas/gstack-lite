@@ -3,7 +3,17 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { expectedSkills, hosts } from '../tools/skill-generator/config.mjs';
-import { defaultRepoRoot, generateSkills, renderSkill } from '../tools/skill-generator/generate.mjs';
+import {
+  defaultRepoRoot,
+  generateSkills,
+  renderSkill,
+  renderSkillPackage,
+} from '../tools/skill-generator/generate.mjs';
+
+async function renderCompleteSkill(options) {
+  const rendered = await renderSkillPackage(options);
+  return [rendered.skillText, ...rendered.references.map((reference) => reference.text)].join('\n');
+}
 
 describe('skill generator', () => {
   it('generates every host skill with reachable ETHOS.md', async () => {
@@ -86,7 +96,7 @@ describe('skill generator', () => {
   });
 
   it('keeps plan-eng-review interactive without stopping at section boundaries', async () => {
-    const text = await renderSkill({
+    const text = await renderCompleteSkill({
       repoRoot: defaultRepoRoot,
       skill: 'plan-eng-review',
       host: 'codex',
@@ -104,7 +114,7 @@ describe('skill generator', () => {
 
   it('requires a releasable semantic commit map in every plan-eng-review rendering', async () => {
     for (const host of ['source', ...hosts]) {
-      const text = await renderSkill({
+      const text = await renderCompleteSkill({
         repoRoot: defaultRepoRoot,
         skill: 'plan-eng-review',
         host,
@@ -130,7 +140,7 @@ describe('skill generator', () => {
   it('persists engineering and CEO plans using repository-specific guidance', async () => {
     for (const skill of ['plan-eng-review', 'plan-ceo-review']) {
       for (const host of ['source', ...hosts]) {
-        const text = await renderSkill({
+        const text = await renderCompleteSkill({
           repoRoot: defaultRepoRoot,
           skill,
           host,
@@ -208,7 +218,7 @@ describe('skill generator', () => {
   });
 
   it('keeps plan-ceo-review interactive through zero-finding sections', async () => {
-    const text = await renderSkill({
+    const text = await renderCompleteSkill({
       repoRoot: defaultRepoRoot,
       skill: 'plan-ceo-review',
       host: 'codex',
